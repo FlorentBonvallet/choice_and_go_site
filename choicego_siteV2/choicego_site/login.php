@@ -1,4 +1,20 @@
 <?php
+
+
+//Define the secret pepper value (same as in register.php)
+define('PASSWORD_PEPPER', 's3cureP3pp3r!@#');
+
+// Hash a password by adding the pepper before hashing
+function hashPasswordWithPepper($password) {
+    return password_hash($password . PASSWORD_PEPPER, PASSWORD_DEFAULT);
+}
+//Verify a password by adding the pepper before checking
+function verifyPasswordWithPepper($password, $hash) {
+    return password_verify($password . PASSWORD_PEPPER, $hash);
+}
+
+
+
 session_start();
 
 $page_title = "Connexion — Choice&Go";
@@ -25,8 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare('SELECT utilisateur_id, mot_de_passe FROM utilisateurs WHERE email = :email');
     $stmt->execute([':email' => $email]);
     $user = $stmt->fetch();
-
-    if ($user && !empty($user['mot_de_passe']) && password_verify($password, $user['mot_de_passe'])) {
+  // Check if user exists and verify password with pepper
+   if ($user && !empty($user['mot_de_passe']) && verifyPasswordWithPepper($password, $user['mot_de_passe'])) {
       // Successful login
       session_regenerate_id(true);
       $_SESSION['user_id'] = (int) $user['utilisateur_id'];

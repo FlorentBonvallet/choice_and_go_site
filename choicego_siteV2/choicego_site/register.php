@@ -1,4 +1,15 @@
 <?php
+
+
+// Define the secret pepper value 
+define('PASSWORD_PEPPER', 's3cureP3pp3r!@#');
+
+// Hash a password by adding the pepper before hashing
+function hashPasswordWithPepper($password) {
+    return password_hash($password . PASSWORD_PEPPER, PASSWORD_DEFAULT);
+}
+
+
 session_start();
 
 $page_title = "Inscription — Choice&Go";
@@ -114,7 +125,8 @@ function getRelativePath($target) {
           $stmt = $pdo->prepare('SELECT COUNT(*) FROM utilisateurs WHERE email = :email');
           $stmt->execute([':email' => $email]);
           if ($stmt->fetchColumn() == 0) {
-            $hash = password_hash($password, PASSWORD_DEFAULT);
+            // Hash the password with pepper before storing in database
+            $hash = hashPasswordWithPepper($password);
             // Insert with optional phone number
             $ins = $pdo->prepare('INSERT INTO utilisateurs (prenom, nom, email, mot_de_passe, telephone) VALUES (:prenom, :nom, :email, :pwd, :telephone)');
             $ins->execute([
