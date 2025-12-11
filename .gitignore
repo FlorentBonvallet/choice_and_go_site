@@ -1,0 +1,14 @@
+# Visual Studio
+.vs/
+.vscode/
+
+# PHP
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp
+*~
