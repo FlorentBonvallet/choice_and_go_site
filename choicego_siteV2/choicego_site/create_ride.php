@@ -30,6 +30,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         $time_from = $_POST['time_from'];
         $places = intval($_POST['pax']);
 
+        // Récupération du vehicule_id depuis le formulaire
+        $vehicule_id = $_POST['vehicule_id'] ?? null;
+
         // Récupération des lat/lon
         $depart_lat = $_POST['depart_latitude'] ?? null;
         $depart_lon = $_POST['depart_longitude'] ?? null;
@@ -69,7 +72,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':conducteur_id' => $conducteur_id,
-            ':vehicule_id' => $vehicule_id,
+            ':vehicule_id' => $vehicule_id, // <-- maintenant défini
             ':lieu_depart' => $lieu_depart,
             ':lieu_arrivee' => $lieu_arrivee,
             ':date_heure_depart' => $date_heure_depart,

@@ -2,7 +2,12 @@
 $page_title = "Choice&Go — Voyagez malin entre étudiants";
 include __DIR__ . "/includes/db.php";
 include __DIR__ . "/includes/header.php";
+
+// Récupérer les lieux distincts en base
+$departures = $pdo->query("SELECT DISTINCT lieu_depart FROM trajets ORDER BY lieu_depart ASC")->fetchAll(PDO::FETCH_COLUMN);
+$arrivals = $pdo->query("SELECT DISTINCT lieu_arrivee FROM trajets ORDER BY lieu_arrivee ASC")->fetchAll(PDO::FETCH_COLUMN);
 ?>
+
 <section class="hero">
   <div class="container hero-grid">
     <img class="hero-img left" src="assets/img/etudiantEnCour.jpeg" alt="Étudiants avec sacs à dos" />
@@ -12,10 +17,27 @@ include __DIR__ . "/includes/header.php";
       <form class="search-trip" action="search.php" method="get">
         <h2>Recherche de trajet</h2>
         <div class="row">
-          <input type="text" name="from" placeholder="Départ..." required />
+          <div class="location-input-wrapper">
+            <input list="departures" id="from" name="from" placeholder="Départ..." required class="location-input" />
+            <datalist id="departures">
+              <?php foreach ($departures as $d): ?>
+                <option value="<?= htmlspecialchars($d) ?>"></option>
+              <?php endforeach; ?>
+            </datalist>
+          </div>
+
           <button type="button" class="swap" aria-label="Intervertir départ et arrivée" title="Intervertir départ et arrivée">⇄</button>
-          <input type="text" name="to" placeholder="Arrivée..." required />
+
+          <div class="location-input-wrapper">
+            <input list="arrivals" id="to" name="to" placeholder="Arrivée..." required class="location-input" />
+            <datalist id="arrivals">
+              <?php foreach ($arrivals as $a): ?>
+                <option value="<?= htmlspecialchars($a) ?>"></option>
+              <?php endforeach; ?>
+            </datalist>
+          </div>
         </div>
+
         <div class="row passengers">
           <label>Nombre(s) de passager(s)</label>
           <div class="counter">
@@ -24,6 +46,7 @@ include __DIR__ . "/includes/header.php";
             <button type="button" class="plus" aria-label="Plus">+</button>
           </div>
         </div>
+
         <button class="btn-primary" type="submit">Rechercher</button>
       </form>
     </div>
@@ -48,4 +71,80 @@ include __DIR__ . "/includes/header.php";
     </article>
   </div>
 </section>
+
+<style>
+.location-input-wrapper {
+    position: relative;
+    flex: 1;
+}
+
+.location-input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 3px solid var(--brand);
+    border-radius: 999px;
+    font-size: 15px;
+    outline: 0;
+}
+
+.swap {
+    font-size: 22px;
+    background: #fff;
+    border: 3px solid var(--brand);
+    border-radius: 999px;
+    padding: 0 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.swap:hover {
+    background: var(--accent);
+    border-color: var(--brand-dark);
+}
+
+.counter input {
+    width: 70px;
+    text-align: center;
+    padding: 8px;
+    border: 3px solid var(--brand);
+    border-radius: 12px;
+}
+
+.counter button {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 0;
+    background: #e6f0ff;
+}
+
+.btn-primary {
+    background: var(--brand);
+    border: 0;
+    color: #fff;
+    border-radius: 12px;
+    padding: 12px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 0 var(--brand-dark);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+}
+</style>
+
+<script>
+const fromInput = document.getElementById('from');
+const toInput = document.getElementById('to');
+
+// Swap des champs départ/arrivée
+document.querySelector('.swap').addEventListener('click', e => {
+    e.preventDefault();
+    const temp = fromInput.value;
+    fromInput.value = toInput.value;
+    toInput.value = temp;
+});
+</script>
+
 <?php include __DIR__ . "/includes/footer.php"; ?>

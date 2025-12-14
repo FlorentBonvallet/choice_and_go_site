@@ -3,8 +3,11 @@
     "",
     "\\choicego_siteV2",
     "\\choicego_siteV2\\choicego_site",
+    "\\choicego_siteV2\\choicego_site\\api",
+    "\\choicego_siteV2\\choicego_site\\assets",
+    "\\choicego_siteV2\\choicego_site\\assets\\css",
     "\\choicego_siteV2\\choicego_site\\includes"
   ],
-  "SelectedNode": "\\choicego_siteV2\\choicego_site\\profile.php",
+  "SelectedNode": "\\choicego_siteV2\\choicego_site\\create_ride.php",
   "PreviewInSolutionExplorer": false
 }
