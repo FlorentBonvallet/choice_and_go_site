@@ -46,7 +46,10 @@ $avatarHref = isset($_SESSION['user_id']) ? 'profile.php' : 'login.php';
       </form>
 
       <nav class="top-actions">
-        <a class="btn-link" href="create_ride.php">➕ Ajouter un trajet</a>
+        <a class="btn-link" href="create_ride.php"> Ajouter un trajet</a>
+        <?php if (isset($_SESSION['user_id'])): ?>
+        <a class="btn-link" href="reservations.php"> Mes réservations</a>
+        <?php endif; ?>
         <a class="avatar" href="<?php echo $avatarHref; ?>" title="Mon compte">👤</a>
       </nav>
     </div>
