@@ -7,12 +7,16 @@
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:choicego_siteV2\\choicego_site\\create_ride.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
     },
     {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\assets\\css\\style.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:choicego_siteV2\\choicego_site\\assets\\css\\style.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\index.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:choicego_siteV2\\choicego_site\\index.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\assets\\css\\style.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:choicego_siteV2\\choicego_site\\assets\\css\\style.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\search.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:choicego_siteV2\\choicego_site\\search.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\reverse_geocode.php||{8B382828-6202-11D1-8870-0000F87579D2}",
@@ -35,10 +39,6 @@
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:choicego_siteV2\\choicego_site\\logout.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\search.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
-      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:choicego_siteV2\\choicego_site\\search.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\contact.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}",
       "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:choicego_siteV2\\choicego_site\\contact.php||{3D2461EC-8045-4AA9-ABFB-812292AE795D}"
     }
@@ -50,7 +50,7 @@
       "DocumentGroups": [
         {
           "DockedWidth": 200,
-          "SelectedChildIndex": 11,
+          "SelectedChildIndex": 10,
           "Children": [
             {
               "$type": "Bookmark",
@@ -69,25 +69,21 @@
               "Name": "ST:129:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
             },
             {
-              "$type": "Bookmark",
-              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
-            },
-            {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 1,
               "Title": "style.css",
               "DocumentMoniker": "C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\assets\\css\\style.css",
               "RelativeDocumentMoniker": "choicego_siteV2\\choicego_site\\assets\\css\\style.css",
               "ToolTip": "C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\assets\\css\\style.css",
               "RelativeToolTip": "choicego_siteV2\\choicego_site\\assets\\css\\style.css",
-              "ViewState": "AgIAAEAAAAAAAAAAAAAcwFEAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAACoAAAAAAAAAAAAAADUAAAAVAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
               "WhenOpened": "2025-12-14T16:39:06.522Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "reverse_geocode.php",
               "DocumentMoniker": "C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\reverse_geocode.php",
               "RelativeDocumentMoniker": "choicego_siteV2\\choicego_site\\reverse_geocode.php",
@@ -100,7 +96,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "geocode.php",
               "DocumentMoniker": "C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\api\\geocode.php",
               "RelativeDocumentMoniker": "choicego_siteV2\\choicego_site\\api\\geocode.php",
@@ -113,7 +109,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "db.php",
               "DocumentMoniker": "C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\includes\\db.php",
               "RelativeDocumentMoniker": "choicego_siteV2\\choicego_site\\includes\\db.php",
@@ -126,7 +122,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "profile.php",
               "DocumentMoniker": "C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\profile.php",
               "RelativeDocumentMoniker": "choicego_siteV2\\choicego_site\\profile.php",
@@ -158,14 +154,14 @@
               "RelativeDocumentMoniker": "choicego_siteV2\\choicego_site\\create_ride.php",
               "ToolTip": "C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\create_ride.php",
               "RelativeToolTip": "choicego_siteV2\\choicego_site\\create_ride.php",
-              "ViewState": "AgIAACkAAAAAAAAAAAAiwEoAAAArAAAAAAAAAA==",
+              "ViewState": "AgIAADAAAAAAAAAAAAAmwDMAAAA4AAAAAAAAAA==",
               "Icon": "89320d42-7831-4f47-839a-c227d3a60919.000001|",
               "WhenOpened": "2025-12-11T14:18:35.48Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "index.php",
               "DocumentMoniker": "C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\index.php",
               "RelativeDocumentMoniker": "choicego_siteV2\\choicego_site\\index.php",
@@ -178,7 +174,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "logout.php",
               "DocumentMoniker": "C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\logout.php",
               "RelativeDocumentMoniker": "choicego_siteV2\\choicego_site\\logout.php",
@@ -191,7 +187,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 3,
               "Title": "search.php",
               "DocumentMoniker": "C:\\Cour\\But2\\S3\\Web\\Tp1\\SAE\\Choice_and_go\\choicego_siteV2\\choicego_site\\search.php",
               "RelativeDocumentMoniker": "choicego_siteV2\\choicego_site\\search.php",
