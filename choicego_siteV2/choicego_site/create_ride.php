@@ -22,6 +22,21 @@ $vehicules = $stmtVeh->fetchAll(PDO::FETCH_ASSOC);
 $successMessage = '';
 $errorMessage = '';
 
+/**
+ * Calcule la distance (km) entre deux points lat/lon avec la formule de Haversine.
+ */
+function haversine_distance_km($lat1, $lon1, $lat2, $lon2)
+{
+    $earth_radius = 6371.0; // rayon terrestre en km
+    $dLat = deg2rad($lat2 - $lat1);
+    $dLon = deg2rad($lon2 - $lon1);
+    $a = sin($dLat / 2) * sin($dLat / 2) +
+        cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
+        sin($dLon / 2) * sin($dLon / 2);
+    $c = 2 * asin(min(1, sqrt($a)));
+    return $earth_radius * $c;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     try {
         $lieu_depart = $_POST['from'];
@@ -38,6 +53,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         $depart_lon = $_POST['depart_longitude'] ?? null;
         $arrivee_lat = $_POST['arrivee_latitude'] ?? null;
         $arrivee_lon = $_POST['arrivee_longitude'] ?? null;
+
+        // normalisation / conversion en float si possible
+        $dLat = is_numeric($depart_lat) ? floatval($depart_lat) : null;
+        $dLon = is_numeric($depart_lon) ? floatval($depart_lon) : null;
+        $aLat = is_numeric($arrivee_lat) ? floatval($arrivee_lat) : null;
+        $aLon = is_numeric($arrivee_lon) ? floatval($arrivee_lon) : null;
+
+        // Calcul de la distance et du prix par place
+        $prix_par_place = 0.00;
+        if ($dLat !== null && $dLon !== null && $aLat !== null && $aLon !== null) {
+            $distance_km = haversine_distance_km($dLat, $dLon, $aLat, $aLon);
+
+            // Paramètres tarifaires (modifiable) :
+            $tarif_par_km = 0.50; // euros par km par place
+            $prix_minimum = 2.00; // prix minimum par place en euros
+
+            $calcule = $distance_km * $tarif_par_km;
+            // arrondir à 2 décimales et appliquer minimum
+            $prix_par_place = round(max($prix_minimum, $calcule), 2);
+        }
 
         $date_heure_depart = $date . ' ' . $time_from . ':00';
 
@@ -72,12 +107,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':conducteur_id' => $conducteur_id,
-            ':vehicule_id' => $vehicule_id, // <-- maintenant défini
+            ':vehicule_id' => $vehicule_id,
             ':lieu_depart' => $lieu_depart,
             ':lieu_arrivee' => $lieu_arrivee,
             ':date_heure_depart' => $date_heure_depart,
             ':places_disponibles' => $places,
-            ':prix_par_place' => 0.00,
+            ':prix_par_place' => $prix_par_place,
             ':depart_latitude' => $depart_lat,
             ':depart_longitude' => $depart_lon,
             ':arrivee_latitude' => $arrivee_lat,
@@ -95,7 +130,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-control-geocoder/2.4.0/Control.Geocoder.min.css" />
 <style>
-    /* ton CSS existant */
     #map {
         height: 400px;
         margin: 1rem 0;
@@ -334,10 +368,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         });
     }
 
+    const departIcon = L.icon({
+        iconUrl: 'https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-blue.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+
+    const arriveeIcon = L.icon({
+        iconUrl: 'https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-red.png',
+        shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        iconSize: [25, 41],
+        iconAnchor: [12, 41],
+        popupAnchor: [1, -34],
+        shadowSize: [41, 41]
+    });
+
     setupGeocoder('from', 'from-suggestions');
     setupGeocoder('to', 'to-suggestions');
 
-    // CLICK SUR LA CARTE AVEC NOM DE VILLE/VILLAGE
+    // CLICK SUR LA CARTE
     map.on('click', async e => {
         if (!selectingMode) return;
 
@@ -365,16 +417,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
         } catch (e) {
             console.warn('Reverse geocoding impossible', e);
-        }   
+        }
 
         if (selectingMode === 'from') {
             fromInput.value = addressName;
             if (fromMarker) map.removeLayer(fromMarker);
-            fromMarker = L.marker([lat, lon], { title: 'Départ' }).addTo(map).bindPopup('Départ').openPopup();
+            fromMarker = L.marker([lat, lon], { title: 'Départ', icon: departIcon }).addTo(map).bindPopup('Départ').openPopup();
         } else if (selectingMode === 'to') {
             toInput.value = addressName;
             if (toMarker) map.removeLayer(toMarker);
-            toMarker = L.marker([lat, lon], { title: 'Arrivée' }).addTo(map).bindPopup('Arrivée').openPopup();
+            toMarker = L.marker([lat, lon], { title: 'Arrivée', icon: arriveeIcon }).addTo(map).bindPopup('Arrivée').openPopup();
         }
 
         // Met à jour les champs cachés lat/lon
@@ -420,79 +472,62 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         }
     }
 
-// icônes personnalisées
-const departIcon = L.icon({
-    iconUrl: 'https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-blue.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
 
-const arriveeIcon = L.icon({
-    iconUrl: 'https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-red.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41]
-});
 
-document.querySelector('.swap').addEventListener('click', function (e) {
-    e.preventDefault();
-    e.stopPropagation();
+    document.querySelector('.swap').addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
 
-    // swap texte
-    const fromValue = fromInput.value;
-    fromInput.value = toInput.value;
-    toInput.value = fromValue;
+        // swap texte
+        const fromValue = fromInput.value;
+        fromInput.value = toInput.value;
+        toInput.value = fromValue;
 
-    // swap coordonnées hidden
-    const dLat = document.getElementById('depart_latitude').value;
-    const dLng = document.getElementById('depart_longitude').value;
+        // swap coordonnées cachées
+        const dLat = document.getElementById('depart_latitude').value;
+        const dLng = document.getElementById('depart_longitude').value;
 
-    document.getElementById('depart_latitude').value =
-        document.getElementById('arrivee_latitude').value;
-    document.getElementById('depart_longitude').value =
-        document.getElementById('arrivee_longitude').value;
+        document.getElementById('depart_latitude').value =
+            document.getElementById('arrivee_latitude').value;
+        document.getElementById('depart_longitude').value =
+            document.getElementById('arrivee_longitude').value;
 
-    document.getElementById('arrivee_latitude').value = dLat;
-    document.getElementById('arrivee_longitude').value = dLng;
+        document.getElementById('arrivee_latitude').value = dLat;
+        document.getElementById('arrivee_longitude').value = dLng;
 
-    // 🔁 swap markers avec couleurs
-    const fromLatLng = fromMarker ? fromMarker.getLatLng() : null;
-    const toLatLng = toMarker ? toMarker.getLatLng() : null;
+        //swap markers avec couleurs
+        const fromLatLng = fromMarker ? fromMarker.getLatLng() : null;
+        const toLatLng = toMarker ? toMarker.getLatLng() : null;
 
-    if (fromMarker) map.removeLayer(fromMarker);
-    if (toMarker) map.removeLayer(toMarker);
+        if (fromMarker) map.removeLayer(fromMarker);
+        if (toMarker) map.removeLayer(toMarker);
 
-    fromMarker = null;
-    toMarker = null;
+        fromMarker = null;
+        toMarker = null;
 
-    if (toLatLng) {
-        fromMarker = L.marker(toLatLng, { title: 'Départ', icon: departIcon })
-            .addTo(map)
-            .bindPopup('Départ');
-    }
+        if (toLatLng) {
+            fromMarker = L.marker(toLatLng, { title: 'Départ', icon: departIcon })
+                .addTo(map)
+                .bindPopup('Départ');
+        }
 
-    if (fromLatLng) {
-        toMarker = L.marker(fromLatLng, { title: 'Arrivée', icon: arriveeIcon })
-            .addTo(map)
-            .bindPopup('Arrivée');
-    }
+        if (fromLatLng) {
+            toMarker = L.marker(fromLatLng, { title: 'Arrivée', icon: arriveeIcon })
+                .addTo(map)
+                .bindPopup('Arrivée');
+        }
 
-    // ajuste la vue si les deux markers existent
-    if (fromMarker && toMarker) {
-        map.fitBounds(
-            L.featureGroup([fromMarker, toMarker]).getBounds().pad(0.1)
-        );
-    }
+        // ajuste la vue si les deux markers existent
+        if (fromMarker && toMarker) {
+            map.fitBounds(
+                L.featureGroup([fromMarker, toMarker]).getBounds().pad(0.1)
+            );
+        }
 
-    // réinitialise l’UI
-    selectingMode = null;
-    updateMapUI();
-});
+        // réinitialise l’UI
+        selectingMode = null;
+        updateMapUI();
+    });
 
 
 
