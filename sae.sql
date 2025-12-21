@@ -31,7 +31,7 @@ CREATE TABLE `reservations` (
   `reservation_id` int NOT NULL,
   `trajet_id` int NOT NULL,
   `passager_id` int NOT NULL,
-  `statut_reservation` enum('en_attente','confirmée','annulée') NOT NULL,
+  `nombre_passager` int NOT NULL,
   `date_reservation` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
@@ -40,10 +40,10 @@ CREATE TABLE `reservations` (
 --
 
 INSERT INTO `reservations` (`reservation_id`, `trajet_id`, `passager_id`, `statut_reservation`, `date_reservation`) VALUES
-(1, 1, 2, 'confirmée', '2025-11-17 16:39:35'),
-(2, 1, 4, 'confirmée', '2025-11-17 16:39:35'),
-(3, 2, 3, 'en_attente', '2025-11-17 16:39:35'),
-(4, 3, 5, 'confirmée', '2025-11-17 16:39:35');
+(1, 1, 2, 1, '2025-11-17 16:39:35'),
+(2, 1, 4, 2, '2025-11-17 16:39:35'),
+(3, 2, 3, 1, '2025-11-17 16:39:35'),
+(4, 3, 5, 3, '2025-11-17 16:39:35');
 
 -- --------------------------------------------------------
 
