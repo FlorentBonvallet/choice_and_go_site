@@ -27,7 +27,7 @@ $avatarHref = isset($_SESSION['user_id']) ? 'profile.php' : 'login.php';
   <title><?php echo $page_title ?? "Choice&Go"; ?></title>
 
   <base href="<?php echo htmlspecialchars($baseHref, ENT_QUOTES); ?>">
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <link rel="stylesheet" href="assets/css/style.css?v=<?php echo time(); ?>" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
