@@ -13,18 +13,15 @@
         <ul>
           <li><a href="index.php">Accueil</a></li>
           <li><a href="create_ride.php">Produits</a></li>
-          <li><a href="#">Producteurs</a></li>
-          <li><a href="#">À propos</a></li>
+          <li><a href="about.php">À propos</a></li>
           <li><a href="contact.php">Contact</a></li>
-          <li><a href="#">Aide en ligne</a></li>
         </ul>
       </div>
 
       <div class="footer-col">
         <h4>CONTACT</h4>
         <ul>
-          <li>Adresse</li>
-          <li>Téléphone</li>
+          <li>06 99 99 XX XX</li>
           <li><a href="mailto:contact@choicego.com">contact@choicego.com</a></li>
         </ul>
       </div>
@@ -32,13 +29,13 @@
       <div class="footer-col">
         <h4>SUIVEZ-NOUS</h4>
         <div class="socials">
-          <a href="#" aria-label="Facebook">
+          <a href="https://www.facebook.com/profile.php?id=61585930944496" target="_blank" rel="noopener noreferrer" aria-label="Facebook">
             <img class="social-icon" src="assets/img/Facebook_Logo.png" alt="" width="24" height="24" loading="lazy" decoding="async" />
           </a>
-          <a href="#" aria-label="Instagram">
+          <a href="https://www.instagram.com/choiceandgo/" target="_blank" rel="noopener noreferrer" aria-label="Instagram">
             <img class="social-icon" src="assets/img/Instagram_icon.png" alt="" width="24" height="24" loading="lazy" decoding="async" />
           </a>
-          <a href="#" aria-label="Twitter">
+          <a href="https://x.com/ChoiceGo181414" target="_blank" rel="noopener noreferrer" aria-label="Twitter">
             <img class="social-icon" src="assets/img/twitter_logo.png" alt="" width="24" height="24" loading="lazy" decoding="async" />
           </a>
         </div>
