@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             $distance_km = haversine_distance_km($dLat, $dLon, $aLat, $aLon);
 
             // Paramètres tarifaires (modifiable) :
-            $tarif_par_km = 0.50; // euros par km par place
+            $tarif_par_km = 0.10; // euros par km par place
             $prix_minimum = 2.00; // prix minimum par place en euros
 
             $calcule = $distance_km * $tarif_par_km;

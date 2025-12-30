@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 session_start();
 
 $page_title = "Mes réservations — Choice&Go";
@@ -25,7 +25,7 @@ $reservationsStmt = $pdo->prepare('
     SELECT 
         r.reservation_id,
         r.trajet_id,
-        r.nombre_places,
+        r.nombre_passager,
         r.date_reservation,
         t.date_heure_depart,
         t.lieu_depart,
@@ -37,7 +37,7 @@ $reservationsStmt = $pdo->prepare('
     FROM reservations r
     JOIN trajets t ON r.trajet_id = t.trajet_id
     JOIN utilisateurs u ON t.conducteur_id = u.utilisateur_id
-    WHERE r.utilisateur_id = :user_id
+    WHERE r.passager_id = :user_id
     ORDER BY t.date_heure_depart DESC
 ');
 $reservationsStmt->execute([':user_id' => $userId]);
@@ -54,7 +54,7 @@ $ridesStmt = $pdo->prepare('
         t.prix_par_place,
         t.statut_trajet,
         COUNT(r.reservation_id) AS nombre_reservations,
-        SUM(r.nombre_places) AS places_reservees
+        SUM(r.nombre_passager) AS places_reservees
     FROM trajets t
     LEFT JOIN reservations r ON t.trajet_id = r.trajet_id
     WHERE t.conducteur_id = :user_id
@@ -364,7 +364,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_reservation'])
         <?php foreach ($reservations as $res): 
             $departTime = date('H:i', strtotime($res['date_heure_depart']));
             $departDate = date('d/m/Y', strtotime($res['date_heure_depart']));
-            $totalPrice = (float)$res['prix_par_place'] * (int)$res['nombre_places'];
+            $totalPrice = (float)$res['prix_par_place'] * (int)$res['nombre_passager'];
             $isPassed = strtotime($res['date_heure_depart']) < time();
         ?>
             <div class="reservation-card">
@@ -391,7 +391,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_reservation'])
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Nombre de places</span>
-                        <span class="detail-value"><span class="passengers-count"><?php echo (int)$res['nombre_places']; ?> place(s)</span></span>
+                        <span class="detail-value"><span class="passengers-count"><?php echo (int)$res['nombre_passager']; ?> place(s)</span></span>
                     </div>
                     <div class="detail-item">
                         <span class="detail-label">Prix par place</span>

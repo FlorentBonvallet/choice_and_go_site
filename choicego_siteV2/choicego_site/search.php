@@ -3,8 +3,9 @@ $page_title = "Résultats — Choice&Go";
 include __DIR__ . "/includes/header.php";
 include __DIR__ . '/includes/db.php';
 
-session_start();
-
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 $from = trim($_GET['from'] ?? '');
 $to   = trim($_GET['to'] ?? '');
 $pax  = max(1, (int)($_GET['pax'] ?? 1));
@@ -48,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['make_reservation'])) 
             $message = '<p class="flash error">Nombre de places insuffisant. Places disponibles : ' . $ride['places_disponibles'] . '</p>';
         } else {
             // Check if user already has a reservation for this ride
-            $existingCheck = $pdo->prepare('SELECT COUNT(*) FROM reservations WHERE trajet_id = :trajet_id AND utilisateur_id = :user_id');
+            $existingCheck = $pdo->prepare('SELECT COUNT(*) FROM reservations WHERE trajet_id = :trajet_id AND passager_id = :user_id');
             $existingCheck->execute([':trajet_id' => $trajet_id, ':user_id' => $user_id]);
             if ($existingCheck->fetchColumn() > 0) {
                 $message = '<p class="flash error">Vous avez déjà une réservation pour ce trajet.</p>';
@@ -60,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['make_reservation'])) 
                     
                     // Insert reservation with the exact number of places needed (without statut_reservation)
                     $insertRes = $pdo->prepare('
-                        INSERT INTO reservations (trajet_id, utilisateur_id, nombre_places, date_reservation)
+                        INSERT INTO reservations (trajet_id, passager_id, nombre_passager, date_reservation)
                         VALUES (:trajet_id, :user_id, :nombre_places, NOW())
                     ');
                     $insertRes->execute([
@@ -114,7 +115,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['make_reservation'])) 
       </div>
       <div class="ride-details">
         <span class="available-seats">Places disponibles : <?php echo (int)$ride['places_disponibles']; ?></span>
-        <form method="post" style="display: inline;">
+        <form method="post">
           <input type="hidden" name="trajet_id" value="<?php echo (int)$ride['trajet_id']; ?>">
           <input type="hidden" name="nombre_places" value="<?php echo $pax; ?>">
           <button type="submit" name="make_reservation" class="btn-primary">Réserver</button>
