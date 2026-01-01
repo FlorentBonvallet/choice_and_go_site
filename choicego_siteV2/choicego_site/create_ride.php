@@ -235,47 +235,211 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         }
     }
 
-    async function setupGeocoder(inputId, suggestionsId) {
-        const input = document.getElementById(inputId);
-        const suggestionsList = document.getElementById(suggestionsId);
-        const isFrom = inputId === 'from';
-        input.addEventListener('input', async e => {
-            const query = e.target.value.trim();
-            if (query.length < 2) { suggestionsList.classList.remove('active'); return; }
-            try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5&countrycodes=fr`);
-                const results = await response.json();
-                suggestionsList.innerHTML = '';
-                if (results.length > 0) {
-                    results.forEach(result => {
-                        const li = document.createElement('li');
-                        li.textContent = result.display_name;
-                        li.dataset.lat = result.lat;
-                        li.dataset.lon = result.lon;
-                        li.addEventListener('click', () => {
-                            input.value = result.display_name;
-                            suggestionsList.classList.remove('active');
-                            const lat = parseFloat(result.lat), lon = parseFloat(result.lon);
-                            if (isFrom) {
-                                if (fromMarker) map.removeLayer(fromMarker);
-                                fromMarker = L.marker([lat, lon], { title: 'Départ' }).addTo(map).bindPopup('Départ');
-                            } else {
-                                if (toMarker) map.removeLayer(toMarker);
-                                toMarker = L.marker([lat, lon], { title: 'Arrivée' }).addTo(map).bindPopup('Arrivée');
-                            }
-                            if (fromMarker && toMarker) { const group = new L.featureGroup([fromMarker, toMarker]); map.fitBounds(group.getBounds().pad(0.1)); }
-                            updateHiddenLatLng();
-                        });
-                        suggestionsList.appendChild(li);
-                    });
-                    suggestionsList.classList.add('active');
-                }
-            } catch (err) { console.error(err); }
-        });
-        document.addEventListener('click', e => {
-            if (e.target !== input) { suggestionsList.classList.remove('active'); }
+
+async function setupGeocoder(inputId, suggestionsId) {
+    const input = document.getElementById(inputId);
+    const suggestionsList = document.getElementById(suggestionsId);
+    const isFrom = inputId === 'from';
+    const relatedBtn = isFrom ? document.getElementById('select-from-btn') : document.getElementById('select-to-btn');
+
+    // debounce + abort pour éviter flicker et réponses hors-ordre
+    let debounceTimer = null;
+    const DEBOUNCE_MS = 300;
+
+    let abortController = null;
+
+    // durée pendant laquelle la liste reste visible après saisie
+    let hideTimeout = null;
+    const HIDE_DELAY = 5000;
+
+    // keyboard navigation
+    let focusedIndex = -1;
+
+    function clearHideTimeout() {
+        if (hideTimeout) { clearTimeout(hideTimeout); hideTimeout = null; }
+    }
+    function scheduleHide(delay = HIDE_DELAY) {
+        clearHideTimeout();
+        hideTimeout = setTimeout(() => {
+            hideSuggestionsNow();
+        }, delay);
+    }
+    function showSuggestions() {
+        suggestionsList.classList.add('active');
+        if (relatedBtn) relatedBtn.classList.add('suggest-active');
+        scheduleHide();
+    }
+    function hideSuggestionsNow() {
+        clearHideTimeout();
+        suggestionsList.classList.remove('active');
+        if (relatedBtn) relatedBtn.classList.remove('suggest-active');
+        focusedIndex = -1;
+        updateKeyboardHighlight();
+    }
+
+    function updateKeyboardHighlight() {
+        const items = suggestionsList.querySelectorAll('li');
+        items.forEach((li, i) => {
+            if (i === focusedIndex) li.classList.add('keyboard-focus');
+            else li.classList.remove('keyboard-focus');
         });
     }
+
+    async function fetchSuggestions(query) {
+        // annule la requête précédente
+        if (abortController) abortController.abort();
+        abortController = new AbortController();
+        const signal = abortController.signal;
+
+        // Nominatim - limit to France; adjust viewbox if desired
+        const viewbox = '-5.142222,51.089062,9.560016,41.333740';
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=6&countrycodes=fr&accept-language=fr&addressdetails=1&viewbox=${viewbox}&bounded=1`;
+
+        try {
+            const resp = await fetch(url, { signal, headers: { 'User-Agent': 'Choice&Go/1.0 (mailto:contact@votre-domaine)' } });
+            if (!resp.ok) throw new Error('Network response not ok');
+            const results = await resp.json();
+            populateSuggestions(results);
+            showSuggestions();
+        } catch (err) {
+            if (err.name === 'AbortError') return;
+            console.error('Geocoder fetch error', err);
+            suggestionsList.innerHTML = '';
+            hideSuggestionsNow();
+        }
+    }
+
+    function populateSuggestions(results) {
+        suggestionsList.innerHTML = '';
+        focusedIndex = -1;
+        updateKeyboardHighlight();
+
+        if (!results || results.length === 0) return;
+
+        results.forEach(result => {
+            const li = document.createElement('li');
+            li.textContent = result.display_name;
+            li.tabIndex = -1;
+            li.dataset.lat = result.lat;
+            li.dataset.lon = result.lon;
+
+            // mousedown pour capturer avant blur
+            li.addEventListener('mousedown', (ev) => {
+                ev.preventDefault();
+                selectSuggestion(result);
+            });
+
+            // souris : garder visible
+            li.addEventListener('mouseenter', () => {
+                clearHideTimeout();
+                focusedIndex = Array.from(suggestionsList.children).indexOf(li);
+                updateKeyboardHighlight();
+            });
+            li.addEventListener('mouseleave', () => {
+                focusedIndex = -1;
+                updateKeyboardHighlight();
+                scheduleHide(1000);
+            });
+
+            suggestionsList.appendChild(li);
+        });
+    }
+
+    function selectSuggestion(result) {
+    input.value = result.display_name;
+    const lat = parseFloat(result.lat), lon = parseFloat(result.lon);
+    const icon = isFrom ? departIcon : arriveeIcon;
+
+    if (isFrom) {
+        if (fromMarker) map.removeLayer(fromMarker);
+        fromMarker = L.marker([lat, lon], { title: 'Départ', icon: icon })
+            .addTo(map)
+            .bindPopup('Départ')
+            .openPopup();
+    } else {
+        if (toMarker) map.removeLayer(toMarker);
+        toMarker = L.marker([lat, lon], { title: 'Arrivée', icon: icon })
+            .addTo(map)
+            .bindPopup('Arrivée')
+            .openPopup();
+    }
+
+    if (fromMarker && toMarker) {
+        const group = new L.featureGroup([fromMarker, toMarker]);
+        map.fitBounds(group.getBounds().pad(0.1));
+    } else {
+        // centrer si un seul marker présent
+        const single = isFrom ? fromMarker : toMarker;
+        if (single) map.setView(single.getLatLng(), 13);
+    }
+
+    updateHiddenLatLng();
+    hideSuggestionsNow();
+}
+
+    // input handling with debounce
+    input.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+        if (debounceTimer) clearTimeout(debounceTimer);
+        if (query.length < 2) {
+            hideSuggestionsNow();
+            return;
+        }
+        debounceTimer = setTimeout(() => {
+            fetchSuggestions(query);
+        }, DEBOUNCE_MS);
+    });
+
+    // show existing suggestions on focus
+    input.addEventListener('focus', () => {
+        if (suggestionsList.children.length > 0) showSuggestions();
+        else if (input.value.trim().length >= 2) {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            fetchSuggestions(input.value.trim());
+        }
+    });
+
+    // allow short delay on blur to let mousedown selection fire
+    input.addEventListener('blur', () => scheduleHide(250));
+
+    // click outside to hide
+    document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !suggestionsList.contains(e.target)) hideSuggestionsNow();
+    });
+
+    // keyboard navigation
+    input.addEventListener('keydown', (e) => {
+        const items = suggestionsList.querySelectorAll('li');
+        if (items.length === 0) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            focusedIndex = (focusedIndex + 1) % items.length;
+            items[focusedIndex].scrollIntoView({ block: 'nearest' });
+            updateKeyboardHighlight();
+            clearHideTimeout();
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            focusedIndex = (focusedIndex - 1 + items.length) % items.length;
+            items[focusedIndex].scrollIntoView({ block: 'nearest' });
+            updateKeyboardHighlight();
+            clearHideTimeout();
+        } else if (e.key === 'Enter') {
+            if (focusedIndex >= 0 && items[focusedIndex]) {
+                e.preventDefault();
+                const li = items[focusedIndex];
+                const result = { display_name: li.textContent, lat: li.dataset.lat, lon: li.dataset.lon };
+                selectSuggestion(result);
+            }
+        } else if (e.key === 'Escape') {
+            hideSuggestionsNow();
+        }
+    });
+
+    // keep suggestions visible while hovering the list
+    suggestionsList.addEventListener('mouseenter', clearHideTimeout);
+    suggestionsList.addEventListener('mouseleave', () => scheduleHide(1000));
+}
 
     const departIcon = L.icon({
         iconUrl: 'https://cdn.jsdelivr.net/gh/pointhi/leaflet-color-markers@master/img/marker-icon-blue.png',

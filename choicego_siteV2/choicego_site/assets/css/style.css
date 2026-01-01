@@ -1007,3 +1007,169 @@ html,body{margin:0;padding:0;font-family:Poppins, system-ui, -apple-system, Sego
         background: var(--brand-dark);
         transform: translateY(-1px);
     }
+
+
+/* === Table styles for ride_details / reservations list === */
+.reservations-list {
+    margin-top: 1rem;
+    background: #fff;
+    border: 1px solid #e6eefc;
+    border-radius: 12px;
+    padding: 0.5rem;
+    box-shadow: 0 6px 18px rgba(43,139,220,0.06);
+}
+
+    /* wrapper to allow horizontal scroll on small screens */
+    .reservations-list .table-wrapper {
+        overflow-x: auto;
+        border-radius: 8px;
+    }
+
+/* table base */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 720px; /* forces scroll on small screens */
+    font-size: 0.95rem;
+}
+
+    /* header */
+    .table thead th {
+        text-align: left;
+        padding: 12px 14px;
+        background: linear-gradient(90deg, var(--brand) 0%, var(--brand-dark) 100%);
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.95rem;
+        border-bottom: 3px solid rgba(255,255,255,0.06);
+    }
+
+    /* rows */
+    .table tbody td {
+        padding: 12px 14px;
+        vertical-align: middle;
+        border-top: 1px solid #f1f5fb;
+        color: var(--ink);
+    }
+
+    /* zebra rows for readability */
+    .table tbody tr:nth-child(even) {
+        background: #fbfdff;
+    }
+
+    /* small muted text for contact / meta */
+    .table .muted {
+        color: var(--muted);
+        font-size: 0.9rem;
+    }
+
+/* contact badges */
+.contact-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #f1f8ff;
+    color: var(--brand);
+    font-weight: 600;
+    margin-right: 6px;
+    font-size: 0.9rem;
+}
+
+/* summary block under table */
+.reservations-list .summary {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1.25rem;
+    align-items: center;
+    padding: 12px 6px 0;
+    color: var(--muted);
+    font-weight: 600;
+}
+
+/* responsive adjustments */
+@media (max-width: 900px) {
+    .table thead th {
+        font-size: 0.9rem;
+        padding: 10px;
+    }
+
+    .table tbody td {
+        padding: 10px;
+    }
+
+    .reservations-list {
+        padding: 0.25rem;
+    }
+}
+
+@media (max-width: 560px) {
+    .table {
+        min-width: 640px;
+    }
+
+    .contact-badge {
+        font-size: 0.85rem;
+        padding: 3px 6px;
+    }
+}
+
+/* === Modal / map UI styles === */
+.map-modal {
+  position: fixed;
+  inset: 0;
+  display: none;
+  z-index: 1200;
+  align-items: center;
+  justify-content: center;
+}
+.map-modal[aria-hidden="false"] {
+  display: flex;
+}
+.map-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(7,18,31,0.5);
+}
+.map-modal-panel {
+  position: relative;
+  width: min(1100px, 94%);
+  max-width: 1100px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+  z-index: 1201;
+  overflow: hidden;
+}
+.map-modal-header {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 16px;
+  border-bottom:1px solid #eef6ff;
+  background: linear-gradient(90deg, var(--brand) 0%, var(--brand-dark) 100%);
+  color: #fff;
+}
+.map-modal-header h3 { margin:0; font-size:1.05rem; }
+#map-modal-body { background:#f5f7fb; }
+#map-view { width:100%; height:100%; }
+
+/* small adjustments for buttons in header */
+.map-modal-header .btn-outline {
+  background: rgba(255,255,255,0.12);
+  color: #fff;
+  border-color: rgba(255,255,255,0.18);
+}
+
+/* responsive */
+@media (max-width: 680px) {
+  .map-modal-panel { width: 96%; height: 80vh; }
+  #map-modal-body { height: calc(80vh - 56px); }
+}
+
+/* ajoutez ceci vers la fin de style.css */
+.map-btn.suggest-active {
+    background: linear-gradient(90deg, #ffefc7 0%, #fff 100%); /* couleur légère pour suggestion active */
+    border-color: var(--brand);
+    color: var(--brand-dark);
+    box-shadow: 0 4px 0 rgba(0,0,0,0.04) inset;
+}
