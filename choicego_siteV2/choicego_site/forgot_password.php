@@ -1,33 +1,55 @@
-﻿<?php
+<?php
 session_start();
 $page_title = "Mot de passe oublié — Choice&Go";
 include __DIR__ . "/includes/db.php";
-
-// Si vous avez installé PHPMailer via Composer, chargez l'autoload
-if (file_exists(__DIR__ . '/vendor/autoload.php')) {
-    require_once __DIR__ . '/vendor/autoload.php';
-} else {
-    // composer non présent : on continue mais l'envoi via SMTP ne fonctionnera pas
-}
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
-use PHPMailer\PHPMailer\Exception;
-
-// Configuration SMTP — adaptez ces valeurs à votre serveur
-// Exemple : Gmail avec application spécifique ou serveur SMTP tiers
-$smtpHost = 'smtp-relay.brevo.com';
-$smtpPort = 587;
-$smtpUser = 'apikey';
-$smtpPass = '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';
-$smtpSecure = PHPMailer::ENCRYPTION_STARTTLS;
-$fromEmail = 'florentbonvallet@gmail.com';
-$fromName = 'Choice&Go';
 
 define('PASSWORD_PEPPER', 's3cureP3pp3r!@#');
 
 $flash = '';
 
+// Configuration expéditeur
+$fromEmail = 'florentbonvallet@gmail.com'; // changez pour votre domaine
+$fromName = 'Choice&Go';
+
+// Récupère la clé Brevo depuis la variable d'environnement
+$brevoApiKey = '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'; // Remplacez par votre clé API Brevo
+function send_brevo_email(string $apiKey, string $fromEmail, string $fromName, string $toEmail, string $subject, string $textContent, string $htmlContent = null): bool {
+    if (empty($apiKey)) return false;
+
+    $payload = [
+        'sender' => ['name' => $fromName, 'email' => $fromEmail],
+        'to' => [['email' => $toEmail]],
+        'subject' => $subject,
+        'textContent' => $textContent,
+    ];
+
+    if ($htmlContent !== null) {
+        $payload['htmlContent'] = $htmlContent;
+    }
+
+    $ch = curl_init('https://api.brevo.com/v3/smtp/email');
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'Accept: application/json',
+        'Content-Type: application/json',
+        'api-key: ' . $apiKey
+    ]);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    if ($response === false) {
+        error_log('Brevo curl error: ' . curl_error($ch));
+    } else {
+        error_log('Brevo response (' . $httpCode . '): ' . $response);
+    }
+    curl_close($ch);
+
+    // Succès si code 2xx
+    return $httpCode >= 200 && $httpCode < 300;
+}
 
 
 

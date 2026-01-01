@@ -128,35 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['make_reservation'])) 
 </section>
 
 <style>
-  .ride-details {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid #eee;
-  }
-
-  .available-seats {
-    font-size: 0.9rem;
-    color: #666;
-  }
-
-  .btn-primary {
-    background: var(--brand);
-    border: 0;
-    color: #fff;
-    border-radius: 6px;
-    padding: 0.5rem 1rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .btn-primary:hover {
-    background: var(--brand-dark);
-    transform: translateY(-1px);
-  }
+  
 </style>
 
 <?php include __DIR__ . "/includes/footer.php"; ?>

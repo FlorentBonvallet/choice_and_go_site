@@ -72,67 +72,6 @@ $arrivals = $pdo->query("SELECT DISTINCT lieu_arrivee FROM trajets ORDER BY lieu
   </div>
 </section>
 
-<style>
-.location-input-wrapper {
-    position: relative;
-    flex: 1;
-}
-
-.location-input {
-    width: 100%;
-    padding: 12px 14px;
-    border: 3px solid var(--brand);
-    border-radius: 999px;
-    font-size: 15px;
-    outline: 0;
-}
-
-.swap {
-    font-size: 22px;
-    background: #fff;
-    border: 3px solid var(--brand);
-    border-radius: 999px;
-    padding: 0 10px;
-    cursor: pointer;
-    transition: all 0.2s;
-}
-
-.swap:hover {
-    background: var(--accent);
-    border-color: var(--brand-dark);
-}
-
-.counter input {
-    width: 70px;
-    text-align: center;
-    padding: 8px;
-    border: 3px solid var(--brand);
-    border-radius: 12px;
-}
-
-.counter button {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    border: 0;
-    background: #e6f0ff;
-}
-
-.btn-primary {
-    background: var(--brand);
-    border: 0;
-    color: #fff;
-    border-radius: 12px;
-    padding: 12px 20px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 6px 0 var(--brand-dark);
-}
-
-.btn-primary:hover {
-    transform: translateY(-1px);
-}
-</style>
 
 <script>
 const fromInput = document.getElementById('from');

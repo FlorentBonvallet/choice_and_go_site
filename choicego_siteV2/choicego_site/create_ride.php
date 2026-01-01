@@ -129,98 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet-control-geocoder/2.4.0/Control.Geocoder.min.css" />
-<style>
-    #map {
-        height: 400px;
-        margin: 1rem 0;
-        border-radius: 8px;
-        border: 1px solid #e0e0e0;
-        position: relative;
-        z-index: 0;
-    }
 
-        #map.selecting-mode {
-            cursor: crosshair;
-        }
-
-    .geocoder-suggestions {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        border: 1px solid #ccc;
-        border-top: none;
-        max-height: 200px;
-        overflow-y: auto;
-        z-index: 10;
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: none;
-    }
-
-        .geocoder-suggestions.active {
-            display: block;
-        }
-
-        .geocoder-suggestions li {
-            padding: 0.5rem;
-            cursor: pointer;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-            .geocoder-suggestions li:hover {
-                background-color: #f5f5f5;
-            }
-
-    .location-input-wrapper {
-        position: relative;
-    }
-
-    .map-hint {
-        padding: 0.75rem;
-        background-color: #e8f4f8;
-        border-left: 4px solid #0066cc;
-        border-radius: 4px;
-        margin-bottom: 1rem;
-        font-size: 0.9rem;
-        color: #333;
-        display: none;
-    }
-
-        .map-hint.active {
-            display: block;
-        }
-
-    .map-buttons {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .map-btn {
-        flex: 1;
-        padding: 0.75rem;
-        border: 2px solid #ddd;
-        background: white;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        transition: all 0.2s;
-    }
-
-        .map-btn:hover {
-            border-color: #0066cc;
-            background-color: #f0f7ff;
-        }
-
-        .map-btn.active {
-            border-color: #0066cc;
-            background-color: #0066cc;
-            color: white;
-        }
-</style>
 
 <section class="container make-ride">
     <h1>CRÉATION DE TRAJET</h1>
@@ -528,11 +437,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
         selectingMode = null;
         updateMapUI();
     });
-
-
-
-
-
 
 
 </script>
