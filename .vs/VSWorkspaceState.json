@@ -3,8 +3,10 @@
     "",
     "\\choicego_siteV2",
     "\\choicego_siteV2\\choicego_site",
+    "\\choicego_siteV2\\choicego_site\\assets",
+    "\\choicego_siteV2\\choicego_site\\assets\\css",
     "\\choicego_siteV2\\choicego_site\\includes"
   ],
-  "SelectedNode": "\\choicego_siteV2\\choicego_site\\forgot_password.php",
+  "SelectedNode": "\\choicego_siteV2\\choicego_site\\includes\\db.php",
   "PreviewInSolutionExplorer": false
 }
