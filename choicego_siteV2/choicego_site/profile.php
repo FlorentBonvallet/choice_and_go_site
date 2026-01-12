@@ -137,76 +137,100 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <section class="container auth">
-  <h1>MON PROFIL</h1>
+    <h1>MON PROFIL</h1>
 
-  <?php if (!empty($flash))
-      echo $flash; ?>
+    <?php if (!empty($flash))
+        echo $flash; ?>
 
-  <form class="auth-form" method="post" action="profile.php" novalidate>
-    <input type="hidden" name="update_profile" value="1" />
+    <form class="auth-form" method="post" action="profile.php" novalidate>
+        <input type="hidden" name="update_profile" value="1" />
 
-    <label>Prénom :
-      <input type="text" name="firstname" value="<?php echo htmlspecialchars($user['prenom']); ?>" required />
-    </label>
+        <label>
+            Prénom :
+            <input type="text" name="firstname" value="<?php echo htmlspecialchars($user['prenom']); ?>" required />
+        </label>
 
-    <label>Nom :
-      <input type="text" name="lastname" value="<?php echo htmlspecialchars($user['nom']); ?>" required />
-    </label>
+        <label>
+            Nom :
+            <input type="text" name="lastname" value="<?php echo htmlspecialchars($user['nom']); ?>" required />
+        </label>
 
-    <label>Adresse mail :
-      <input type="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required />
-    </label>
+        <label>
+            Adresse mail :
+            <input type="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>" required />
+        </label>
 
-    <label>Téléphone :
-      <input type="tel" name="telephone" value="<?php echo htmlspecialchars($user['telephone'] ?? ''); ?>" />
-    </label>
+        <label>
+            Téléphone :
+            <input type="tel" name="telephone" value="<?php echo htmlspecialchars($user['telephone'] ?? ''); ?>" />
+        </label>
 
-    <fieldset style="margin-top:1rem;border:1px solid #eee;padding:0.75rem;">
-      <legend>Changer le mot de passe (optionnel)</legend>
-      <label>Mot de passe actuel :
-        <input type="password" name="current_password" autocomplete="current-password" />
-      </label>
-      <label>Nouveau mot de passe :
-        <input type="password" name="new_password" autocomplete="new-password" />
-      </label>
-      <label>Confirmer le nouveau mot de passe :
-        <input type="password" name="new_password_confirm" autocomplete="new-password" />
-      </label>
-    </fieldset>
+        <fieldset style="margin-top:1rem;border:1px solid #eee;padding:0.75rem;">
+            <legend>Changer le mot de passe (optionnel)</legend>
+            <label>
+                Mot de passe actuel :
+                <input type="password" name="current_password" autocomplete="current-password" />
+            </label>
+            <label>
+                Nouveau mot de passe :
+                <input type="password" name="new_password" autocomplete="new-password" />
+            </label>
+            <label>
+                Confirmer le nouveau mot de passe :
+                <input type="password" name="new_password_confirm" autocomplete="new-password" />
+            </label>
+        </fieldset>
 
-    <div style="display:flex;gap:0.5rem;margin-top:1rem;">
-      <button class="btn-primary" type="submit">Enregistrer</button>
-      <a class="btn-secondary" href="logout.php" style="align-self:center;padding:0.5rem 0.75rem;text-decoration:none;">Déconnexion</a>
-    </div>
-  </form>
-
-  <!-- Vehicles section -->
-  <section style="margin-top:2rem;">
-    <h2>Mes véhicules</h2>
-
-    <?php if (count($vehicles) === 0): ?>
-      <p>Aucun véhicule enregistré.</p>
-    <?php else: ?>
-      <ul>
-        <?php foreach ($vehicles as $v): ?>
-          <li>
-            <?php echo htmlspecialchars("{$v['marque']} {$v['modele']} ({$v['couleur']}, {$v['immatriculation']})"); ?>
-          </li>
-        <?php endforeach; ?>
-      </ul>
-    <?php endif; ?>
-
-    <form method="post" action="profile.php" style="margin-top:1rem;">
-      <input type="hidden" name="add_vehicle" value="1" />
-
-      <label>Marque : <input type="text" name="marque" required /></label>
-      <label>Modèle : <input type="text" name="modele" required /></label>
-      <label>Couleur : <input type="text" name="couleur" /></label>
-      <label>Immatriculation : <input type="text" name="immatriculation" required /></label>
-
-      <button class="btn-primary" type="submit" name="add_vehicle" value="1" style="margin-top:0.5rem;">Ajouter le véhicule</button>
+        <div style="display:flex;gap:0.5rem;margin-top:1rem;">
+            <button class="btn-primary" type="submit">Enregistrer</button>
+            <a class="btn-secondary" href="logout.php" style="align-self:center;padding:0.5rem 0.75rem;text-decoration:none;">Déconnexion</a>
+        </div>
     </form>
-  </section>
+
+    <!-- Vehicles section -->
+    <form class="auth-form" method="post" action="profile.php" novalidate style="margin-top:5rem">
+        <section style="margin-top:2rem;">
+            <h1>Mes véhicules</h1>
+
+            <?php if (count($vehicles) === 0): ?>
+                <p>Aucun véhicule enregistré.</p>
+            <?php else: ?>
+                <div class="table-scroll">
+                    <table class="vehicles-table">
+                        <thead>
+                            <tr>
+                                <th>Marque</th>
+                                <th>Modèle</th>
+                                <th>Couleur</th>
+                                <th>Immatriculation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($vehicles as $v): ?>
+                                <tr>
+                                    <td><?= htmlspecialchars($v['marque']) ?></td>
+                                    <td><?= htmlspecialchars($v['modele']) ?></td>
+                                    <td><?= htmlspecialchars($v['couleur']) ?></td>
+                                    <td><?= htmlspecialchars($v['immatriculation']) ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            <?php endif; ?>
+
+            <form method="post" action="profile.php" style="margin-top:1rem;">
+                <input type="hidden" name="add_vehicle" value="1" />
+
+                <label>Marque : <input type="text" name="marque" required /></label>
+                <label>Modèle : <input type="text" name="modele" required /></label>
+                <label>Couleur : <input type="text" name="couleur" /></label>
+                <label>Immatriculation : <input type="text" name="immatriculation" required /></label>
+
+                <button class="btn-primary" type="submit" name="add_vehicle" value="1" style="margin-top:0.5rem;">Ajouter le véhicule</button>
+            </form>
+        </section>
+    </form>
 </section>
 
 <?php include __DIR__ . "/includes/footer.php"; ?>

@@ -39,11 +39,7 @@ $avatarHref = isset($_SESSION['user_id']) ? 'profile.php' : 'login.php';
         <img src="assets/img/logo.png" alt="Choice&Go" />
       </a>
 
-      <form class="search-bar" action="index.php" method="get">
-        <span class="icon">🔍</span>
-        <input type="text" name="q" placeholder="Rechercher..." value="<?php echo htmlspecialchars($_GET['q'] ?? ''); ?>" />
-        <button type="submit" aria-label="Rechercher"></button>
-      </form>
+      <a class="slogan">Un slogant vraiment super génial</a>
 
       <nav class="top-actions">
         <a class="btn-link" href="create_ride.php"> Ajouter un trajet</a>
