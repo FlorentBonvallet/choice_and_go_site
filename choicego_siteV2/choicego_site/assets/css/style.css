@@ -115,7 +115,7 @@ html, body {
 /* Mobile menu toggle - hidden by default */
 .mobile-menu-toggle {
     display: none;
-    background: none;
+    background: none;           
     border: none;
     font-size: 28px;
     cursor: pointer;
@@ -1730,68 +1730,25 @@ button {
         position: fixed;
         top: 0;
         right: -100%;
-        width: 280px;
+        width: 80%;
+        max-width: 320px;
         height: 100vh;
         background: #fff;
+        box-shadow: -8px 0 24px rgba(0,0,0,0.12);
+        padding: 16px;
+        display: flex;
         flex-direction: column;
-        align-items: stretch;
-        padding: 70px 20px 20px;
         gap: 12px;
-        box-shadow: -4px 0 20px rgba(0,0,0,0.15);
-        transition: right 0.3s ease;
-        z-index: 1001;
+        transition: right 240ms ease;
+        z-index: 1200;
     }
 
     .top-actions.mobile-open {
         right: 0;
     }
 
-    .top-actions .btn-link {
-        display: block;
-        text-align: center;
-        padding: 14px 16px;
-    }
-
-    .top-actions .avatar {
-        align-self: center;
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-    }
-
-    /* Close button for mobile menu */
-    .mobile-menu-close {
-        display: block;
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        background: none;
-        border: none;
-        font-size: 28px;
-        cursor: pointer;
-    }
-
-    .logo img {
-        height: 44px;
-    }
-
-    .search-bar {
-        padding: 4px 8px;
-    }
-
-    .search-bar input {
-        font-size: 14px;
-        padding: 8px 6px;
-    }
-
-    .map-modal-panel {
-        width: 96%;
-        height: 80vh;
-    }
-
-    #map-modal-body {
-        height: calc(80vh - 56px);
-    }
+    .top-actions a { display: block; }
+    .mobile-close { display: inline-flex; align-self: flex-end; }
 }
 
 /* ========================================
@@ -2091,4 +2048,52 @@ button {
     .vehicles-table td {
         padding: 8px;
     }
+}
+
+/* Mobile menu: minimal styles for hamburger + panel */
+.mobile-toggle {
+  display: none;
+  background: transparent;
+  border: 2px solid var(--brand);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+/* close button inside mobile menu */
+.mobile-close {
+  display: none;
+  background: transparent;
+  border: 0;
+  font-size: 20px;
+  margin-left: auto;
+  cursor: pointer;
+}
+
+/* When viewport is small, show hamburger and hide normal inline nav */
+@media (max-width: 680px) {
+  .mobile-toggle { display: inline-flex; align-items: center; }
+  /* hide normal top-actions layout and display as panel when mobile-open present */
+  .top-actions {
+    position: fixed;
+    top: 0;
+    right: -100%;
+    width: 80%;
+    max-width: 320px;
+    height: 100vh;
+    background: #fff;
+    box-shadow: -8px 0 24px rgba(0,0,0,0.12);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: right 240ms ease;
+    z-index: 1200;
+  }
+  .top-actions.mobile-open {
+    right: 0;
+  }
+  .top-actions a { display: block; }
+  .mobile-close { display: inline-flex; align-self: flex-end; }
 }
