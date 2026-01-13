@@ -20,6 +20,29 @@ $userStmt = $pdo->prepare('SELECT prenom, nom FROM utilisateurs WHERE utilisateu
 $userStmt->execute([':id' => $userId]);
 $user = $userStmt->fetch();
 
+// Get unread notifications
+$notificationsStmt = $pdo->prepare('
+    SELECT notification_id, type_notification, titre, message, date_creation
+    FROM notifications
+    WHERE utilisateur_id = :user_id AND lu = FALSE
+    ORDER BY date_creation DESC
+');
+$notificationsStmt->execute([':user_id' => $userId]);
+$notifications = $notificationsStmt->fetchAll();
+
+// Handle notification dismissal
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dismiss_notification'])) {
+    $notificationId = (int) ($_POST['notification_id'] ?? 0);
+
+    // Mark notification as read
+    $markReadStmt = $pdo->prepare('UPDATE notifications SET lu = TRUE WHERE notification_id = :id AND utilisateur_id = :user_id');
+    $markReadStmt->execute([':id' => $notificationId, ':user_id' => $userId]);
+
+    // Refresh notifications
+    $notificationsStmt->execute([':user_id' => $userId]);
+    $notifications = $notificationsStmt->fetchAll();
+}
+
 // Fetch user's reservations (as passenger) — includes lat/lon
 $reservationsStmt = $pdo->prepare('
     SELECT 
@@ -78,11 +101,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_reservation'])
     $reservationId = (int) ($_POST['reservation_id'] ?? 0);
 
     // Verify the reservation belongs to the current user
-    $checkStmt = $pdo->prepare('SELECT utilisateur_id FROM reservations WHERE reservation_id = :id');
+    $checkStmt = $pdo->prepare('SELECT passager_id, nombre_passager, trajet_id FROM reservations WHERE reservation_id = :id');
     $checkStmt->execute([':id' => $reservationId]);
     $res = $checkStmt->fetch();
 
-    if ($res && $res['utilisateur_id'] == $userId) {
+    if ($res && $res['passager_id'] == $userId) {
         try {
             // Delete reservation
             $deleteStmt = $pdo->prepare('DELETE FROM reservations WHERE reservation_id = :id');
@@ -91,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_reservation'])
             // Restore available seats
             $restoreSeats = $pdo->prepare('UPDATE trajets SET places_disponibles = places_disponibles + :places WHERE trajet_id = :trajet_id');
             $restoreSeats->execute([
-                ':places' => $res['nombre_places'],
+                ':places' => $res['nombre_passager'],
                 ':trajet_id' => $res['trajet_id']
             ]);
 
@@ -107,6 +130,93 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_reservation'])
         $message = '<p class="flash error">Erreur : réservation non trouvée ou accès non autorisé.</p>';
     }
 }
+
+// Handle deletion of rides (trajets) with notifications
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ride'])) {
+    $trajetId = (int) ($_POST['trajet_id'] ?? 0);
+
+    // Verify the ride belongs to the current user and get ride info with reservations
+    $checkRideStmt = $pdo->prepare('
+        SELECT t.conducteur_id, t.lieu_depart, t.lieu_arrivee, t.date_heure_depart,
+               COUNT(r.reservation_id) as nb_reservations
+        FROM trajets t
+        LEFT JOIN reservations r ON t.trajet_id = r.trajet_id
+        WHERE t.trajet_id = :id
+        GROUP BY t.trajet_id, t.conducteur_id, t.lieu_depart, t.lieu_arrivee, t.date_heure_depart
+    ');
+    $checkRideStmt->execute([':id' => $trajetId]);
+    $ride = $checkRideStmt->fetch();
+
+    if ($ride && $ride['conducteur_id'] == $userId) {
+        $nbReservations = (int) $ride['nb_reservations'];
+
+        try {
+            // Start transaction for data consistency
+            $pdo->beginTransaction();
+
+            // If there are reservations, create notifications for each passenger
+            if ($nbReservations > 0) {
+                // Get all passengers affected by this cancellation
+                $passengersStmt = $pdo->prepare('
+                    SELECT passager_id, nombre_passager
+                    FROM reservations
+                    WHERE trajet_id = :trajet_id
+                ');
+                $passengersStmt->execute([':trajet_id' => $trajetId]);
+                $passengers = $passengersStmt->fetchAll();
+
+                // Format ride info for notification
+                $departDate = date('d/m/Y à H:i', strtotime($ride['date_heure_depart']));
+                $titre = "Désistement du conducteur";
+                $notifMessage = "Le conducteur a annulé le trajet de " . $ride['lieu_depart'] .
+                               " vers " . $ride['lieu_arrivee'] . " prévu le " . $departDate .
+                               ". Votre réservation a été automatiquement annulée.";
+
+                // Create notification for each passenger
+                $notifStmt = $pdo->prepare('
+                    INSERT INTO notifications (utilisateur_id, type_notification, titre, message)
+                    VALUES (:user_id, :type, :titre, :message)
+                ');
+
+                foreach ($passengers as $passenger) {
+                    $notifStmt->execute([
+                        ':user_id' => $passenger['passager_id'],
+                        ':type' => 'desistement_conducteur',
+                        ':titre' => $titre,
+                        ':message' => $notifMessage
+                    ]);
+                }
+
+                // Delete all reservations for this ride
+                $deleteReservationsStmt = $pdo->prepare('DELETE FROM reservations WHERE trajet_id = :id');
+                $deleteReservationsStmt->execute([':id' => $trajetId]);
+            }
+
+            // Delete the ride
+            $deleteRideStmt = $pdo->prepare('DELETE FROM trajets WHERE trajet_id = :id');
+            $deleteRideStmt->execute([':id' => $trajetId]);
+
+            // Commit transaction
+            $pdo->commit();
+
+            if ($nbReservations > 0) {
+                $message = '<p class="flash success">Trajet supprimé avec succès. ' . $nbReservations . ' passager(s) ont été notifié(s) de votre désistement.</p>';
+            } else {
+                $message = '<p class="flash success">Trajet supprimé avec succès.</p>';
+            }
+        } catch (Exception $e) {
+            // Rollback on error
+            $pdo->rollBack();
+            $message = '<p class="flash error">Erreur lors de la suppression : ' . htmlspecialchars($e->getMessage()) . '</p>';
+        }
+
+        // Refresh rides
+        $ridesStmt->execute([':user_id' => $userId]);
+        $rides = $ridesStmt->fetchAll();
+    } else {
+        $message = '<p class="flash error">Erreur : trajet non trouvé ou accès non autorisé.</p>';
+    }
+}
 ?>
 
 <!-- Leaflet CSS (chargé ici) -->
@@ -114,9 +224,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_reservation'])
 
 <section class="container reservations-container">
     <h1>MES RÉSERVATIONS</h1>
-    
+
     <?php if (!empty($message))
         echo $message; ?>
+
+    <!-- Notifications de désistement -->
+    <?php if (!empty($notifications)): ?>
+        <?php foreach ($notifications as $notif): ?>
+            <div class="notification-banner notification-<?php echo htmlspecialchars($notif['type_notification']); ?>">
+                <div class="notification-icon">⚠️</div>
+                <div class="notification-content">
+                    <h3 class="notification-title"><?php echo htmlspecialchars($notif['titre']); ?></h3>
+                    <p class="notification-message"><?php echo htmlspecialchars($notif['message']); ?></p>
+                    <span class="notification-date">
+                        <?php echo date('d/m/Y à H:i', strtotime($notif['date_creation'])); ?>
+                    </span>
+                </div>
+                <form method="post" class="notification-dismiss-form">
+                    <input type="hidden" name="dismiss_notification" value="1">
+                    <input type="hidden" name="notification_id" value="<?php echo (int) $notif['notification_id']; ?>">
+                    <button type="submit" class="notification-close" title="Fermer la notification">✕</button>
+                </form>
+            </div>
+        <?php endforeach; ?>
+    <?php endif; ?>
 
     <!-- Passenger Reservations Section -->
     <h2 class="section-title">📌 Mes trajets en tant que passager</h2>
@@ -183,11 +314,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_reservation'])
 
                 <div class="card-actions">
                     <?php if (!$isPassed): ?>
-                        <form method="post" style="display: inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir annuler cette réservation ?');">
-                            <input type="hidden" name="cancel_reservation" value="1">
-                            <input type="hidden" name="reservation_id" value="<?php echo (int) $res['reservation_id']; ?>">
-                            <button type="submit" class="btn-cancel">Annuler la réservation</button>
-                        </form>
+                        <button type="button" class="btn-cancel btn-cancel-reservation"
+                            data-reservation-id="<?php echo (int) $res['reservation_id']; ?>"
+                            data-reservation-title="<?php echo htmlspecialchars($res['lieu_depart'] . ' → ' . $res['lieu_arrivee']); ?>">
+                            Annuler la réservation
+                        </button>
                     <?php endif; ?>
 
                     <!-- Voir la carte -->
@@ -293,11 +424,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_reservation'])
                         data-title="<?php echo htmlspecialchars($ride['lieu_depart'] . ' → ' . $ride['lieu_arrivee']); ?>">
                         Voir la carte
                     </button>
+
+                    <?php if (!$isPassed): ?>
+                        <button type="button" class="btn-delete"
+                            data-ride-id="<?php echo (int) $ride['trajet_id']; ?>"
+                            data-ride-title="<?php echo htmlspecialchars($ride['lieu_depart'] . ' → ' . $ride['lieu_arrivee']); ?>"
+                            data-reservations="<?php echo $placesReserved; ?>">
+                            Supprimer le trajet
+                        </button>
+                    <?php endif; ?>
                 </div>
             </div>
         <?php endforeach; ?>
     <?php endif; ?>
 </section>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="confirm-modal" aria-hidden="true">
+  <div class="confirm-modal-backdrop" data-close="true"></div>
+  <div class="confirm-modal-panel" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+    <div class="confirm-modal-header">
+      <div class="confirm-modal-icon">⚠️</div>
+      <h3 id="delete-modal-title">Confirmer la suppression</h3>
+    </div>
+    <div class="confirm-modal-body">
+      <p id="delete-modal-message"></p>
+      <p class="confirm-modal-warning" id="delete-modal-warning" style="display: none;"></p>
+    </div>
+    <div class="confirm-modal-actions">
+      <button type="button" class="btn-outline" id="delete-modal-cancel">Annuler</button>
+      <button type="button" class="btn-delete-confirm" id="delete-modal-confirm">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden form for deletion -->
+<form method="post" id="delete-form" style="display: none;">
+  <input type="hidden" name="delete_ride" value="1">
+  <input type="hidden" name="trajet_id" id="delete-trajet-id" value="">
+</form>
+
+<!-- Hidden form for reservation cancellation (improved) -->
+<form method="post" id="cancel-reservation-form" style="display: none;">
+  <input type="hidden" name="cancel_reservation" value="1">
+  <input type="hidden" name="reservation_id" id="cancel-reservation-id" value="">
+</form>
 
 <!-- Map modal -->
 <div id="map-modal" class="map-modal" aria-hidden="true">
@@ -423,6 +594,104 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['cancel_reservation'])
         const group = L.featureGroup(markers);
         map.fitBounds(group.getBounds().pad(0.15));
       }
+    }
+  });
+})();
+</script>
+
+<!-- Confirmation Modal Logic -->
+<script>
+(function(){
+  const deleteModal = document.getElementById('delete-modal');
+  const deleteForm = document.getElementById('delete-form');
+  const cancelReservationForm = document.getElementById('cancel-reservation-form');
+  const deleteModalMessage = document.getElementById('delete-modal-message');
+  const deleteModalWarning = document.getElementById('delete-modal-warning');
+  const deleteModalConfirm = document.getElementById('delete-modal-confirm');
+  const deleteModalCancel = document.getElementById('delete-modal-cancel');
+  const deleteTrajetIdInput = document.getElementById('delete-trajet-id');
+  const cancelReservationIdInput = document.getElementById('cancel-reservation-id');
+
+  let currentAction = null; // 'delete-ride' or 'cancel-reservation'
+
+  function openDeleteModal(message, warning, action) {
+    deleteModalMessage.textContent = message;
+    if (warning) {
+      deleteModalWarning.textContent = warning;
+      deleteModalWarning.style.display = 'block';
+    } else {
+      deleteModalWarning.style.display = 'none';
+    }
+    currentAction = action;
+    deleteModal.setAttribute('aria-hidden', 'false');
+    deleteModalConfirm.focus();
+  }
+
+  function closeDeleteModal() {
+    deleteModal.setAttribute('aria-hidden', 'true');
+    currentAction = null;
+  }
+
+  // Handle delete ride button clicks
+  document.addEventListener('click', function(e) {
+    const deleteBtn = e.target.closest('.btn-delete');
+    if (deleteBtn) {
+      const rideId = deleteBtn.dataset.rideId;
+      const rideTitle = deleteBtn.dataset.rideTitle;
+      const reservations = parseInt(deleteBtn.dataset.reservations || '0', 10);
+
+      deleteTrajetIdInput.value = rideId;
+
+      if (reservations > 0) {
+        openDeleteModal(
+          'Voulez-vous vraiment supprimer le trajet "' + rideTitle + '" ?',
+          'Attention : Ce trajet a ' + reservations + ' réservation(s) active(s). Les passagers seront automatiquement notifiés de votre désistement et leurs réservations seront annulées.',
+          'delete-ride'
+        );
+      } else {
+        openDeleteModal(
+          'Voulez-vous vraiment supprimer le trajet "' + rideTitle + '" ?',
+          null,
+          'delete-ride'
+        );
+      }
+    }
+
+    // Handle cancel reservation button clicks
+    const cancelBtn = e.target.closest('.btn-cancel-reservation');
+    if (cancelBtn) {
+      const reservationId = cancelBtn.dataset.reservationId;
+      const reservationTitle = cancelBtn.dataset.reservationTitle;
+
+      cancelReservationIdInput.value = reservationId;
+
+      openDeleteModal(
+        'Voulez-vous vraiment annuler votre réservation pour "' + reservationTitle + '" ?',
+        'Votre réservation sera définitivement annulée et les places seront libérées.',
+        'cancel-reservation'
+      );
+    }
+  });
+
+  // Handle confirm button
+  deleteModalConfirm.addEventListener('click', function() {
+    if (currentAction === 'delete-ride') {
+      deleteForm.submit();
+    } else if (currentAction === 'cancel-reservation') {
+      cancelReservationForm.submit();
+    }
+  });
+
+  // Handle cancel button
+  deleteModalCancel.addEventListener('click', closeDeleteModal);
+
+  // Handle backdrop click
+  document.querySelector('.confirm-modal-backdrop').addEventListener('click', closeDeleteModal);
+
+  // Handle Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && deleteModal.getAttribute('aria-hidden') === 'false') {
+      closeDeleteModal();
     }
   });
 })();
