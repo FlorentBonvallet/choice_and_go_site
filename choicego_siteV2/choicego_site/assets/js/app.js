@@ -67,6 +67,78 @@ document.addEventListener('keydown', (e) => {
       modal.style.display = 'none';
       modal.setAttribute('aria-hidden', 'true');
     }
+    // Also close mobile menu on Escape
+    closeMobileMenu();
+  }
+});
+
+// ========================================
+// MOBILE MENU FUNCTIONALITY
+// ========================================
+function openMobileMenu() {
+  const menu = document.getElementById('top-actions');
+  const toggle = document.getElementById('mobile-menu-toggle');
+  
+  if (menu) {
+    menu.classList.add('mobile-open');
+  }
+  if (toggle) {
+    toggle.setAttribute('aria-expanded', 'true');
+  }
+  // Prevent body scroll when menu is open
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMobileMenu() {
+  const menu = document.getElementById('top-actions');
+  const toggle = document.getElementById('mobile-menu-toggle');
+  
+  if (menu) {
+    menu.classList.remove('mobile-open');
+  }
+  if (toggle) {
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+  // Restore body scroll
+  document.body.style.overflow = '';
+}
+
+// Mobile menu event listeners
+document.addEventListener('DOMContentLoaded', () => {
+  const menuToggle = document.getElementById('mobile-menu-toggle');
+  const menuClose = document.getElementById('mobile-menu-close');
+  const menu = document.getElementById('top-actions');
+
+  // Open menu on hamburger click
+  if (menuToggle) {
+    menuToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openMobileMenu();
+    });
+  }
+
+  // Close menu on X button click
+  if (menuClose) {
+    menuClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeMobileMenu();
+    });
+  }
+
+  // Close menu when clicking a menu link (for better UX)
+  if (menu) {
+    menu.querySelectorAll('a').forEach(link => {
+      link.addEventListener('click', () => {
+        closeMobileMenu();
+      });
+    });
+  }
+});
+
+// Close mobile menu on window resize (when returning to desktop)
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 680) {
+    closeMobileMenu();
   }
 });
 
