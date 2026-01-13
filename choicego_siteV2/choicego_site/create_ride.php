@@ -199,7 +199,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                                 title="<?= htmlspecialchars("{$v['marque']} {$v['modele']} {$v['couleur']} {$v['immatriculation']}") ?>">
                                 <?= htmlspecialchars("{$v['marque']} {$v['modele']} ({$v['immatriculation']})") ?>
                             </option>
-
                         <?php endforeach; ?>
                     <?php endif; ?>
                 </select>
