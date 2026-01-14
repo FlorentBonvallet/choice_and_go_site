@@ -1,11 +1,11 @@
 <?php
-$page_title = "Résultats — Choice&Go";
-include __DIR__ . "/includes/header.php";
-include __DIR__ . '/includes/db.php';
+session_start();
+require_once __DIR__ . '/includes/db.php';
+require_once __DIR__ . '/includes/csrf.php';
+require_once __DIR__ . '/includes/flash.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+$page_title = "Résultats — Choice&Go";
+
 $from = trim($_GET['from'] ?? '');
 $to   = trim($_GET['to'] ?? '');
 $pax  = max(1, (int)($_GET['pax'] ?? 1));
@@ -27,10 +27,12 @@ $stmt->execute([
 $results = $stmt->fetchAll();
 
 // Handle reservation submission
-$message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['make_reservation'])) {
-    if (!isset($_SESSION['user_id'])) {
-        $message = '<p class="flash error">Vous devez être connecté pour faire une réservation. <a href="login.php">Se connecter</a></p>';
+    // Validate CSRF token
+    if (!csrf_validate($_POST['csrf_token'] ?? null)) {
+        flash_set('error', 'Session expirée. Veuillez réessayer.');
+    } elseif (!isset($_SESSION['user_id'])) {
+        flash_set('error', 'Vous devez être connecté pour faire une réservation. <a href="login.php">Se connecter</a>');
     } else {
         $trajet_id = (int)($_POST['trajet_id'] ?? 0);
         $nombre_places = (int)($_POST['nombre_places'] ?? 1);
@@ -42,24 +44,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['make_reservation'])) 
         $ride = $rideCheck->fetch();
         
         if (!$ride) {
-            $message = '<p class="flash error">Le trajet n\'existe pas.</p>';
+            flash_set('error', 'Le trajet n\'existe pas.');
         } elseif ($ride['conducteur_id'] == $user_id) {
-            $message = '<p class="flash error">Vous ne pouvez pas réserver votre propre trajet.</p>';
+            flash_set('error', 'Vous ne pouvez pas réserver votre propre trajet.');
         } elseif ($ride['places_disponibles'] < $nombre_places) {
-            $message = '<p class="flash error">Nombre de places insuffisant. Places disponibles : ' . $ride['places_disponibles'] . '</p>';
+            flash_set('error', 'Nombre de places insuffisant. Places disponibles : ' . $ride['places_disponibles']);
         } else {
             // Check if user already has a reservation for this ride
             $existingCheck = $pdo->prepare('SELECT COUNT(*) FROM reservations WHERE trajet_id = :trajet_id AND passager_id = :user_id');
             $existingCheck->execute([':trajet_id' => $trajet_id, ':user_id' => $user_id]);
             if ($existingCheck->fetchColumn() > 0) {
-                $message = '<p class="flash error">Vous avez déjà une réservation pour ce trajet.</p>';
+                flash_set('error', 'Vous avez déjà une réservation pour ce trajet.');
             } else {
                 try {
-                    // Reserve exactly the number of places requested by the user
-                    // Even if the ride has more places available, we only reserve what was needed
+                    $pdo->beginTransaction();
+                    
                     $placesToReserve = min($nombre_places, $ride['places_disponibles']);
                     
-                    // Insert reservation with the exact number of places needed (without statut_reservation)
+                    // Insert reservation
                     $insertRes = $pdo->prepare('
                         INSERT INTO reservations (trajet_id, passager_id, nombre_passager, date_reservation)
                         VALUES (:trajet_id, :user_id, :nombre_places, NOW())
@@ -70,14 +72,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['make_reservation'])) 
                         ':nombre_places' => $placesToReserve
                     ]);
                     
-                    // Update available seats - deduct only the exact number reserved
+                    // Update available seats
                     $updateSeats = $pdo->prepare('UPDATE trajets SET places_disponibles = places_disponibles - :places WHERE trajet_id = :id');
                     $updateSeats->execute([
                         ':places' => $placesToReserve,
                         ':id' => $trajet_id
                     ]);
                     
-                    $message = '<p class="flash success">Réservation confirmée pour ' . $placesToReserve . ' place(s) ! <a href="reservations.php">Voir vos réservations</a></p>';
+                    $pdo->commit();
+                    
+                    csrf_regenerate();
+                    flash_set('success', 'Réservation confirmée pour ' . $placesToReserve . ' place(s) ! <a href="reservations.php">Voir vos réservations</a>');
                     
                     // Refresh results
                     $stmt->execute([
@@ -87,18 +92,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['make_reservation'])) 
                     ]);
                     $results = $stmt->fetchAll();
                 } catch (Exception $e) {
-                    $message = '<p class="flash error">Erreur lors de la réservation : ' . htmlspecialchars($e->getMessage()) . '</p>';
+                    $pdo->rollBack();
+                    flash_set('error', 'Erreur lors de la réservation. Veuillez réessayer.');
+                    error_log('Reservation error: ' . $e->getMessage());
                 }
             }
         }
     }
 }
+
+include __DIR__ . "/includes/header.php";
 ?>
 <section class="container results">
   <h1>Résultats de recherche</h1>
   <p>Trajets pour <strong><?php echo htmlspecialchars($from); ?></strong> → <strong><?php echo htmlspecialchars($to); ?></strong> pour <?php echo $pax; ?> passager(s).</p>
   
-  <?php if (!empty($message)) echo $message; ?>
+  <?= flash_render() ?>
   
   <?php if (count($results) === 0): ?>
     <p style="text-align: center; padding: 2rem; background: #f5f5f5; border-radius: 8px;">
@@ -116,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['make_reservation'])) 
       <div class="ride-details">
         <span class="available-seats">Places disponibles : <?php echo (int)$ride['places_disponibles']; ?></span>
         <form method="post">
+          <?= csrf_field() ?>
           <input type="hidden" name="trajet_id" value="<?php echo (int)$ride['trajet_id']; ?>">
           <input type="hidden" name="nombre_places" value="<?php echo $pax; ?>">
           <button type="submit" name="make_reservation" class="btn-primary">Réserver</button>
@@ -126,9 +136,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['make_reservation'])) 
   </ul>
   <?php endif; ?>
 </section>
-
-<style>
-  
-</style>
 
 <?php include __DIR__ . "/includes/footer.php"; ?>

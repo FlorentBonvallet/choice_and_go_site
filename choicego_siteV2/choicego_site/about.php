@@ -1,6 +1,7 @@
 <?php
+session_start();
 $page_title = "À propos — Choice&Go";
-include __DIR__ . "/includes/db.php";
+require_once __DIR__ . "/includes/flash.php";
 include __DIR__ . "/includes/header.php";
 ?>
 
@@ -12,6 +13,8 @@ include __DIR__ . "/includes/header.php";
 </section>
 
 <section class="about-content container">
+  <?= flash_render() ?>
+
   <div class="about-section">
     <h2>Notre Mission</h2>
     <p>
