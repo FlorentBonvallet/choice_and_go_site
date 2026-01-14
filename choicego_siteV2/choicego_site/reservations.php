@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['dismiss_notification'
 
 // Fetch user's reservations (as passenger) — includes lat/lon
 $reservationsStmt = $pdo->prepare('
-    SELECT 
+    SELECT
         r.reservation_id,
         r.trajet_id,
         r.nombre_passager,
@@ -72,7 +72,7 @@ $reservations = $reservationsStmt->fetchAll();
 
 // Fetch user's rides as driver (trajets créés) — includes lat/lon
 $ridesStmt = $pdo->prepare('
-    SELECT 
+    SELECT
         t.trajet_id,
         t.date_heure_depart,
         t.lieu_depart,
@@ -169,8 +169,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ride'])) {
                 $departDate = date('d/m/Y à H:i', strtotime($ride['date_heure_depart']));
                 $titre = "Désistement du conducteur";
                 $notifMessage = "Le conducteur a annulé le trajet de " . $ride['lieu_depart'] .
-                               " vers " . $ride['lieu_arrivee'] . " prévu le " . $departDate .
-                               ". Votre réservation a été automatiquement annulée.";
+                    " vers " . $ride['lieu_arrivee'] . " prévu le " . $departDate .
+                    ". Votre réservation a été automatiquement annulée.";
 
                 // Create notification for each passenger
                 $notifStmt = $pdo->prepare('
@@ -241,8 +241,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ride'])) {
                     </span>
                 </div>
                 <form method="post" class="notification-dismiss-form">
-                    <input type="hidden" name="dismiss_notification" value="1">
-                    <input type="hidden" name="notification_id" value="<?php echo (int) $notif['notification_id']; ?>">
+                    <input type="hidden" name="dismiss_notification" value="1" />
+                    <input type="hidden" name="notification_id" value="<?php echo (int) $notif['notification_id']; ?>" />
                     <button type="submit" class="notification-close" title="Fermer la notification">✕</button>
                 </form>
             </div>
@@ -251,7 +251,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ride'])) {
 
     <!-- Passenger Reservations Section -->
     <h2 class="section-title">📌 Mes trajets en tant que passager</h2>
-    
+
     <?php if (count($reservations) === 0): ?>
         <div class="empty-state">
             <p>Vous n'avez pas encore de réservations.</p>
@@ -313,14 +313,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ride'])) {
                 </div>
 
                 <div class="card-actions">
-                    <?php if (!$isPassed): ?>
-                        <button type="button" class="btn-cancel btn-cancel-reservation"
-                            data-reservation-id="<?php echo (int) $res['reservation_id']; ?>"
-                            data-reservation-title="<?php echo htmlspecialchars($res['lieu_depart'] . ' → ' . $res['lieu_arrivee']); ?>">
-                            Annuler la réservation
-                        </button>
-                    <?php endif; ?>
-
                     <!-- Voir la carte -->
                     <?php
                     $dlat = $res['depart_lat'] ?? '';
@@ -333,9 +325,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ride'])) {
                         data-depart-lon="<?php echo htmlspecialchars($dlon); ?>"
                         data-arrivee-lat="<?php echo htmlspecialchars($alat); ?>"
                         data-arrivee-lon="<?php echo htmlspecialchars($alon); ?>"
-                        data-title="<?php echo htmlspecialchars($res['lieu_depart'] . ' → ' . $res['lieu_arrivee']); ?>">
-                        Voir la carte
+                        data-title="<?php echo htmlspecialchars($res['lieu_depart'] . ' → ' . $res['lieu_arrivee']); ?>"> Voir la carte
                     </button>
+
+                    <button type="button"
+                        class="btn-annuler-reservation"
+                        data-reservation-id="<?= $res['reservation_id'] ?>"> Annuler la réservation
+                    </button>
+
+                    <div class="popup-supr">
+                        <div class="popup-content-supr">
+                            <span class="popup-close-supr">&times;</span>
+                            <p>Voulez-vous vraiment annuler cette réservation ?</p>
+                            <button type="button" class="btn-confirmer">Oui</button>
+                            <button type="button" class="btn-annuler">Non</button>
+                        </div>
+                    </div>
                 </div>
             </div>
         <?php endforeach; ?>
@@ -343,7 +348,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ride'])) {
 
     <!-- Driver Rides Section -->
     <h2 class="section-title">🚗 Mes trajets en tant que conducteur</h2>
-    
+
     <?php if (count($rides) === 0): ?>
         <div class="empty-state">
             <p>Vous n'avez pas encore créé de trajets.</p>
@@ -407,7 +412,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ride'])) {
                 </div>
 
                 <div class="card-actions">
-                    <a href="ride_details.php?id=<?php echo (int) $ride['trajet_id']; ?>" class="btn-outline">Voir les détails</a>
+                    <a href="ride_details.php?id=<?php echo (int) $ride['trajet_id']; ?>" class="btn-outline">Voir les passagers</a>
 
                     <!-- Voir la carte pour le conducteur -->
                     <?php
@@ -421,280 +426,155 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_ride'])) {
                         data-depart-lon="<?php echo htmlspecialchars($dlon); ?>"
                         data-arrivee-lat="<?php echo htmlspecialchars($alat); ?>"
                         data-arrivee-lon="<?php echo htmlspecialchars($alon); ?>"
-                        data-title="<?php echo htmlspecialchars($ride['lieu_depart'] . ' → ' . $ride['lieu_arrivee']); ?>">
-                        Voir la carte
+                        data-title="<?php echo htmlspecialchars($ride['lieu_depart'] . ' → ' . $ride['lieu_arrivee']); ?>"> Voir la carte
                     </button>
 
-                    <?php if (!$isPassed): ?>
-                        <button type="button" class="btn-delete"
-                            data-ride-id="<?php echo (int) $ride['trajet_id']; ?>"
-                            data-ride-title="<?php echo htmlspecialchars($ride['lieu_depart'] . ' → ' . $ride['lieu_arrivee']); ?>"
-                            data-reservations="<?php echo $placesReserved; ?>">
-                            Supprimer le trajet
-                        </button>
-                    <?php endif; ?>
+                    <button type="button" class="btn-supprimer">Supprimer</button>
+
+                    <div class="popup-supr">
+                        <div class="popup-content-supr">
+                            <span class="popup-close-supr">&times;</span>
+                            <p>Voulez-vous vraiment supprimer ce trajet ?</p>
+                            <button type="button" class="btn-confirmer">Oui</button>
+                            <button type="button" class="btn-annuler">Annuler</button>
+                        </div>
+                    </div>
+
+
                 </div>
             </div>
         <?php endforeach; ?>
     <?php endif; ?>
 </section>
 
-<!-- Delete Confirmation Modal -->
-<div id="delete-modal" class="confirm-modal" aria-hidden="true">
-  <div class="confirm-modal-backdrop" data-close="true"></div>
-  <div class="confirm-modal-panel" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
-    <div class="confirm-modal-header">
-      <div class="confirm-modal-icon">⚠️</div>
-      <h3 id="delete-modal-title">Confirmer la suppression</h3>
-    </div>
-    <div class="confirm-modal-body">
-      <p id="delete-modal-message"></p>
-      <p class="confirm-modal-warning" id="delete-modal-warning" style="display: none;"></p>
-    </div>
-    <div class="confirm-modal-actions">
-      <button type="button" class="btn-outline" id="delete-modal-cancel">Annuler</button>
-      <button type="button" class="btn-delete-confirm" id="delete-modal-confirm">Supprimer</button>
-    </div>
-  </div>
-</div>
-
-<!-- Hidden form for deletion -->
-<form method="post" id="delete-form" style="display: none;">
-  <input type="hidden" name="delete_ride" value="1">
-  <input type="hidden" name="trajet_id" id="delete-trajet-id" value="">
-</form>
-
-<!-- Hidden form for reservation cancellation (improved) -->
-<form method="post" id="cancel-reservation-form" style="display: none;">
-  <input type="hidden" name="cancel_reservation" value="1">
-  <input type="hidden" name="reservation_id" id="cancel-reservation-id" value="">
-</form>
 
 <!-- Map modal -->
 <div id="map-modal" class="map-modal" aria-hidden="true">
-  <div class="map-modal-backdrop" data-close="true"></div>
-  <div class="map-modal-panel" role="dialog" aria-modal="true" aria-labelledby="map-modal-title">
-    <div class="map-modal-header">
-      <h3 id="map-modal-title">Carte</h3>
-      <div>
-        <label style="font-weight:600;margin-right:8px;"><input type="checkbox" id="show-my-location"> Ma position</label>
-        <button class="btn-outline" id="map-modal-close" aria-label="Fermer">Fermer</button>
-      </div>
+    <div class="map-modal-backdrop" data-close="true"></div>
+    <div class="map-modal-panel" role="dialog" aria-modal="true" aria-labelledby="map-modal-title">
+        <div class="map-modal-header">
+            <h3 id="map-modal-title">Carte</h3>
+            <div>
+                <label style="font-weight:600;margin-right:8px;"><input type="checkbox" id="show-my-location" /> Ma position</label>
+                <button class="btn-outline" id="map-modal-close" aria-label="Fermer">Fermer</button>
+            </div>
+        </div>
+        <div id="map-modal-body" style="height:480px;">
+            <div id="map-view" style="width:100%;height:100%;"></div>
+        </div>
     </div>
-    <div id="map-modal-body" style="height:480px;">
-      <div id="map-view" style="width:100%;height:100%;"></div>
-    </div>
-  </div>
 </div>
 
 <!-- Leaflet JS + modal/map logic -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
-(function(){
-  let map = null;
-  let markers = [];
-  let myLocationMarker = null;
+    (function () {
+        let map = null;
+        let markers = [];
+        let myLocationMarker = null;
 
-  function openModal(title, dlat, dlon, alat, alon) {
-    document.getElementById('map-modal').setAttribute('aria-hidden', 'false');
-    document.getElementById('map-modal-title').textContent = title || 'Carte';
+        function openModal(title, dlat, dlon, alat, alon) {
+            document.getElementById('map-modal').setAttribute('aria-hidden', 'false');
+            document.getElementById('map-modal-title').textContent = title || 'Carte';
 
-    // init map if needed
-    if (!map) {
-      map = L.map('map-view', { dragging: true, tap: true }).setView([46.2276, 2.2137], 6);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 }).addTo(map);
-    }
+            // init map if needed
+            if (!map) {
+                map = L.map('map-view', { dragging: true, tap: true }).setView([46.2276, 2.2137], 6);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 19 }).addTo(map);
+            }
 
-    // remove existing markers
-    markers.forEach(m => map.removeLayer(m));
-    markers = [];
+            // remove existing markers
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
 
-    // add depart marker
-    if (dlat && dlon) {
-      const m1 = L.marker([parseFloat(dlat), parseFloat(dlon)]).addTo(map).bindPopup('Départ').openPopup();
-      markers.push(m1);
-    }
+            // add depart marker
+            if (dlat && dlon) {
+                const m1 = L.marker([parseFloat(dlat), parseFloat(dlon)]).addTo(map).bindPopup('Départ').openPopup();
+                markers.push(m1);
+            }
 
-    // add arrivee marker
-    if (alat && alon) {
-      const m2 = L.marker([parseFloat(alat), parseFloat(alon)]).addTo(map).bindPopup('Arrivée').openPopup();
-      markers.push(m2);
-    }
+            // add arrivee marker
+            if (alat && alon) {
+                const m2 = L.marker([parseFloat(alat), parseFloat(alon)]).addTo(map).bindPopup('Arrivée').openPopup();
+                markers.push(m2);
+            }
 
-    // fit bounds
-    if (markers.length === 1) {
-      map.setView(markers[0].getLatLng(), 13);
-    } else if (markers.length > 1) {
-      const group = L.featureGroup(markers);
-      map.fitBounds(group.getBounds().pad(0.15));
-    }
+            // fit bounds
+            if (markers.length === 1) {
+                map.setView(markers[0].getLatLng(), 13);
+            } else if (markers.length > 1) {
+                const group = L.featureGroup(markers);
+                map.fitBounds(group.getBounds().pad(0.15));
+            }
 
-    // update my location checkbox state
-    document.getElementById('show-my-location').checked = false;
-    if (myLocationMarker) {
-      map.removeLayer(myLocationMarker);
-      myLocationMarker = null;
-    }
-  }
-
-  function closeModal() {
-    document.getElementById('map-modal').setAttribute('aria-hidden', 'true');
-  }
-
-  // delegate click on view-map buttons
-  document.addEventListener('click', function(e){
-    const btn = e.target.closest('.view-map-btn');
-    if (!btn) return;
-    const dlat = btn.dataset.departLat || '';
-    const dlon = btn.dataset.departLon || '';
-    const alat = btn.dataset.arriveeLat || '';
-    const alon = btn.dataset.arriveeLon || '';
-    const title = btn.dataset.title || 'Carte';
-    openModal(title, dlat, dlon, alat, alon);
-  });
-
-  // close handlers
-  document.getElementById('map-modal-close').addEventListener('click', closeModal);
-  document.querySelector('.map-modal-backdrop').addEventListener('click', closeModal);
-
-  // show my location toggle
-  document.getElementById('show-my-location').addEventListener('change', function(e){
-    if (!map) return;
-    if (this.checked) {
-      if (!navigator.geolocation) {
-        alert('Géolocalisation non disponible dans votre navigateur.');
-        this.checked = false;
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(function(pos){
-        const lat = pos.coords.latitude;
-        const lon = pos.coords.longitude;
-        if (myLocationMarker) map.removeLayer(myLocationMarker);
-        myLocationMarker = L.marker([lat, lon], {title: 'Ma position'}).addTo(map).bindPopup('Ma position').openPopup();
-        // include in bounds with other markers
-        const all = markers.slice();
-        all.push(myLocationMarker);
-        if (all.length === 1) map.setView(all[0].getLatLng(), 13);
-        else {
-          const group = L.featureGroup(all);
-          map.fitBounds(group.getBounds().pad(0.15));
+            // update my location checkbox state
+            document.getElementById('show-my-location').checked = false;
+            if (myLocationMarker) {
+                map.removeLayer(myLocationMarker);
+                myLocationMarker = null;
+            }
         }
-      }, function(err){
-        alert('Impossible de récupérer la position : ' + (err.message || 'erreur'));
-        document.getElementById('show-my-location').checked = false;
-      }, { enableHighAccuracy: true, timeout: 10000 });
-    } else {
-      if (myLocationMarker) {
-        map.removeLayer(myLocationMarker);
-        myLocationMarker = null;
-      }
-      // refit to markers only
-      if (markers.length === 1) map.setView(markers[0].getLatLng(), 13);
-      else if (markers.length > 1) {
-        const group = L.featureGroup(markers);
-        map.fitBounds(group.getBounds().pad(0.15));
-      }
-    }
-  });
-})();
-</script>
 
-<!-- Confirmation Modal Logic -->
-<script>
-(function(){
-  const deleteModal = document.getElementById('delete-modal');
-  const deleteForm = document.getElementById('delete-form');
-  const cancelReservationForm = document.getElementById('cancel-reservation-form');
-  const deleteModalMessage = document.getElementById('delete-modal-message');
-  const deleteModalWarning = document.getElementById('delete-modal-warning');
-  const deleteModalConfirm = document.getElementById('delete-modal-confirm');
-  const deleteModalCancel = document.getElementById('delete-modal-cancel');
-  const deleteTrajetIdInput = document.getElementById('delete-trajet-id');
-  const cancelReservationIdInput = document.getElementById('cancel-reservation-id');
+        function closeModal() {
+            document.getElementById('map-modal').setAttribute('aria-hidden', 'true');
+        }
 
-  let currentAction = null; // 'delete-ride' or 'cancel-reservation'
+        // delegate click on view-map buttons
+        document.addEventListener('click', function (e) {
+            const btn = e.target.closest('.view-map-btn');
+            if (!btn) return;
+            const dlat = btn.dataset.departLat || '';
+            const dlon = btn.dataset.departLon || '';
+            const alat = btn.dataset.arriveeLat || '';
+            const alon = btn.dataset.arriveeLon || '';
+            const title = btn.dataset.title || 'Carte';
+            openModal(title, dlat, dlon, alat, alon);
+        });
 
-  function openDeleteModal(message, warning, action) {
-    deleteModalMessage.textContent = message;
-    if (warning) {
-      deleteModalWarning.textContent = warning;
-      deleteModalWarning.style.display = 'block';
-    } else {
-      deleteModalWarning.style.display = 'none';
-    }
-    currentAction = action;
-    deleteModal.setAttribute('aria-hidden', 'false');
-    deleteModalConfirm.focus();
-  }
+        // close handlers
+        document.getElementById('map-modal-close').addEventListener('click', closeModal);
+        document.querySelector('.map-modal-backdrop').addEventListener('click', closeModal);
 
-  function closeDeleteModal() {
-    deleteModal.setAttribute('aria-hidden', 'true');
-    currentAction = null;
-  }
-
-  // Handle delete ride button clicks
-  document.addEventListener('click', function(e) {
-    const deleteBtn = e.target.closest('.btn-delete');
-    if (deleteBtn) {
-      const rideId = deleteBtn.dataset.rideId;
-      const rideTitle = deleteBtn.dataset.rideTitle;
-      const reservations = parseInt(deleteBtn.dataset.reservations || '0', 10);
-
-      deleteTrajetIdInput.value = rideId;
-
-      if (reservations > 0) {
-        openDeleteModal(
-          'Voulez-vous vraiment supprimer le trajet "' + rideTitle + '" ?',
-          'Attention : Ce trajet a ' + reservations + ' réservation(s) active(s). Les passagers seront automatiquement notifiés de votre désistement et leurs réservations seront annulées.',
-          'delete-ride'
-        );
-      } else {
-        openDeleteModal(
-          'Voulez-vous vraiment supprimer le trajet "' + rideTitle + '" ?',
-          null,
-          'delete-ride'
-        );
-      }
-    }
-
-    // Handle cancel reservation button clicks
-    const cancelBtn = e.target.closest('.btn-cancel-reservation');
-    if (cancelBtn) {
-      const reservationId = cancelBtn.dataset.reservationId;
-      const reservationTitle = cancelBtn.dataset.reservationTitle;
-
-      cancelReservationIdInput.value = reservationId;
-
-      openDeleteModal(
-        'Voulez-vous vraiment annuler votre réservation pour "' + reservationTitle + '" ?',
-        'Votre réservation sera définitivement annulée et les places seront libérées.',
-        'cancel-reservation'
-      );
-    }
-  });
-
-  // Handle confirm button
-  deleteModalConfirm.addEventListener('click', function() {
-    if (currentAction === 'delete-ride') {
-      deleteForm.submit();
-    } else if (currentAction === 'cancel-reservation') {
-      cancelReservationForm.submit();
-    }
-  });
-
-  // Handle cancel button
-  deleteModalCancel.addEventListener('click', closeDeleteModal);
-
-  // Handle backdrop click
-  document.querySelector('.confirm-modal-backdrop').addEventListener('click', closeDeleteModal);
-
-  // Handle Escape key
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && deleteModal.getAttribute('aria-hidden') === 'false') {
-      closeDeleteModal();
-    }
-  });
-})();
+        // show my location toggle
+        document.getElementById('show-my-location').addEventListener('change', function (e) {
+            if (!map) return;
+            if (this.checked) {
+                if (!navigator.geolocation) {
+                    alert('Géolocalisation non disponible dans votre navigateur.');
+                    this.checked = false;
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(function (pos) {
+                    const lat = pos.coords.latitude;
+                    const lon = pos.coords.longitude;
+                    if (myLocationMarker) map.removeLayer(myLocationMarker);
+                    myLocationMarker = L.marker([lat, lon], { title: 'Ma position' }).addTo(map).bindPopup('Ma position').openPopup();
+                    // include in bounds with other markers
+                    const all = markers.slice();
+                    all.push(myLocationMarker);
+                    if (all.length === 1) map.setView(all[0].getLatLng(), 13);
+                    else {
+                        const group = L.featureGroup(all);
+                        map.fitBounds(group.getBounds().pad(0.15));
+                    }
+                }, function (err) {
+                    alert('Impossible de récupérer la position : ' + (err.message || 'erreur'));
+                    document.getElementById('show-my-location').checked = false;
+                }, { enableHighAccuracy: true, timeout: 10000 });
+            } else {
+                if (myLocationMarker) {
+                    map.removeLayer(myLocationMarker);
+                    myLocationMarker = null;
+                }
+                // refit to markers only
+                if (markers.length === 1) map.setView(markers[0].getLatLng(), 13);
+                else if (markers.length > 1) {
+                    const group = L.featureGroup(markers);
+                    map.fitBounds(group.getBounds().pad(0.15));
+                }
+            }
+        });
+    })();
 </script>
 
 <?php include __DIR__ . "/includes/footer.php"; ?>

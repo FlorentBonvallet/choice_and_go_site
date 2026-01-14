@@ -81,7 +81,7 @@ include __DIR__ . "/includes/header.php";
 
 <?php if ($popupContent): ?>
 <!-- Popup -->
-<div id="mailPopup" class="popup">
+<div id="mailPopup" class="popup-mail">
   <div class="popup-content">
     <span class="popup-close">&times;</span>
     <?php echo $popupContent; ?>

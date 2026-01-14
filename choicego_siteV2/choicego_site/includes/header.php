@@ -42,7 +42,7 @@ $avatarHref = isset($_SESSION['user_id']) ? 'profile.php' : 'login.php';
         <img src="assets/img/logo.png" alt="Choice&Go" />
       </a>
 
-      <a class="slogan">Un slogant vraiment super génial</a>
+      <a class="slogan">Voyage étudiant, budget content</a>
 
       <!-- Mobile menu toggle button -->
       <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Ouvrir le menu" aria-expanded="false">
