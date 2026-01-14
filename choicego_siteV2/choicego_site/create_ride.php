@@ -1,77 +1,92 @@
 <?php
 session_start();
-require_once __DIR__ . "/includes/db.php"; // connexion PDO
+require_once __DIR__ . "/includes/db.php";
+require_once __DIR__ . "/includes/csrf.php";
+require_once __DIR__ . "/includes/flash.php";
+require_once __DIR__ . "/includes/geo.php";
 
 $page_title = "Création de trajet — Choice&Go";
-include __DIR__ . "/includes/header.php";
 
-// Vérifie si l'utilisateur est connecté
+// Verify user is logged in
 if (!isset($_SESSION['user_id'])) {
-    die("Erreur : utilisateur non connecté.");
+    flash_set('error', 'Vous devez être connecté pour créer un trajet.');
+    header('Location: login.php');
+    exit;
 }
 
 $conducteur_id = $_SESSION['user_id'];
 
-// Récupère tous les véhicules du conducteur
+// Get all vehicles for this driver
 $stmtVeh = $pdo->prepare("SELECT vehicule_id, marque, modele, couleur, immatriculation FROM vehicules WHERE utilisateur_id = ?");
 $stmtVeh->execute([$conducteur_id]);
 $vehicules = $stmtVeh->fetchAll(PDO::FETCH_ASSOC);
 
-
-// Gestion du formulaire POST
-$successMessage = '';
-$errorMessage = '';
-
-/**
- * Calcule la distance (km) entre deux points lat/lon avec la formule de Haversine.
- */
-function haversine_distance_km($lat1, $lon1, $lat2, $lon2)
-{
-    $earth_radius = 6371.0; // rayon terrestre en km
-    $dLat = deg2rad($lat2 - $lat1);
-    $dLon = deg2rad($lon2 - $lon1);
-    $a = sin($dLat / 2) * sin($dLat / 2) +
-        cos(deg2rad($lat1)) * cos(deg2rad($lat2)) *
-        sin($dLon / 2) * sin($dLon / 2);
-    $c = 2 * asin(min(1, sqrt($a)));
-    return $earth_radius * $c;
-}
-
+// Handle form POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
     try {
-        $lieu_depart = $_POST['from'];
-        $lieu_arrivee = $_POST['to'];
-        $date = $_POST['date'];
-        $time_from = $_POST['time_from'];
-        $places = intval($_POST['pax']);
+        // Validate CSRF token
+        if (!csrf_validate($_POST['csrf_token'] ?? null)) {
+            throw new Exception("Session expirée. Veuillez réessayer.");
+        }
 
-        // Récupération du vehicule_id depuis le formulaire
-        $vehicule_id = $_POST['vehicule_id'] ?? null;
+        // Validate required fields
+        $lieu_depart = trim($_POST['from'] ?? '');
+        $lieu_arrivee = trim($_POST['to'] ?? '');
+        $date = $_POST['date'] ?? '';
+        $time_from = $_POST['time_from'] ?? '';
+        $places = filter_var($_POST['pax'] ?? 1, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 8]]);
+        $vehicule_id = filter_var($_POST['vehicule_id'] ?? null, FILTER_VALIDATE_INT);
 
-        // Récupération des lat/lon
+        if (empty($lieu_depart) || empty($lieu_arrivee)) {
+            throw new Exception("Les lieux de départ et d'arrivée sont requis.");
+        }
+
+        if ($places === false) {
+            throw new Exception("Le nombre de passagers doit être entre 1 et 8.");
+        }
+
+        // Validate date is not in the past
+        $ride_date = new DateTime($date . ' ' . $time_from);
+        $now = new DateTime();
+        if ($ride_date < $now) {
+            throw new Exception("La date et l'heure du trajet ne peuvent pas être dans le passé.");
+        }
+
+        // Validate vehicle belongs to user
+        if ($vehicule_id) {
+            $stmtCheck = $pdo->prepare("SELECT vehicule_id FROM vehicules WHERE vehicule_id = ? AND utilisateur_id = ?");
+            $stmtCheck->execute([$vehicule_id, $conducteur_id]);
+            if (!$stmtCheck->fetch()) {
+                throw new Exception("Véhicule invalide.");
+            }
+        }
+
+        // Get and validate coordinates
         $depart_lat = $_POST['depart_latitude'] ?? null;
         $depart_lon = $_POST['depart_longitude'] ?? null;
         $arrivee_lat = $_POST['arrivee_latitude'] ?? null;
         $arrivee_lon = $_POST['arrivee_longitude'] ?? null;
 
-        // normalisation / conversion en float si possible
-        $dLat = is_numeric($depart_lat) ? floatval($depart_lat) : null;
-        $dLon = is_numeric($depart_lon) ? floatval($depart_lon) : null;
-        $aLat = is_numeric($arrivee_lat) ? floatval($arrivee_lat) : null;
-        $aLon = is_numeric($arrivee_lon) ? floatval($arrivee_lon) : null;
+        $dLat = null;
+        $dLon = null;
+        $aLat = null;
+        $aLon = null;
 
-        // Calcul de la distance et du prix par place
-        $prix_par_place = 0.00;
+        if (is_valid_coordinates($depart_lat, $depart_lon)) {
+            $dLat = floatval($depart_lat);
+            $dLon = floatval($depart_lon);
+        }
+
+        if (is_valid_coordinates($arrivee_lat, $arrivee_lon)) {
+            $aLat = floatval($arrivee_lat);
+            $aLon = floatval($arrivee_lon);
+        }
+
+        // Calculate price based on distance
+        $prix_par_place = 2.00; // Default minimum
         if ($dLat !== null && $dLon !== null && $aLat !== null && $aLon !== null) {
             $distance_km = haversine_distance_km($dLat, $dLon, $aLat, $aLon);
-
-            // Paramètres tarifaires (modifiable) :
-            $tarif_par_km = 0.10; // euros par km par place
-            $prix_minimum = 2.00; // prix minimum par place en euros
-
-            $calcule = $distance_km * $tarif_par_km;
-            // arrondir à 2 décimales et appliquer minimum
-            $prix_par_place = round(max($prix_minimum, $calcule), 2);
+            $prix_par_place = calculate_ride_price($distance_km);
         }
 
         $date_heure_depart = $date . ' ' . $time_from . ':00';
@@ -113,18 +128,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
             ':date_heure_depart' => $date_heure_depart,
             ':places_disponibles' => $places,
             ':prix_par_place' => $prix_par_place,
-            ':depart_latitude' => $depart_lat,
-            ':depart_longitude' => $depart_lon,
-            ':arrivee_latitude' => $arrivee_lat,
-            ':arrivee_longitude' => $arrivee_lon
+            ':depart_latitude' => $dLat,
+            ':depart_longitude' => $dLon,
+            ':arrivee_latitude' => $aLat,
+            ':arrivee_longitude' => $aLon
         ]);
 
-        $successMessage = "Trajet créé avec succès !";
+        // Regenerate CSRF token after successful submission
+        csrf_regenerate();
+
+        flash_set('success', 'Trajet créé avec succès !');
+        header('Location: profile.php');
+        exit;
 
     } catch (Exception $e) {
-        $errorMessage = "Erreur lors de la création du trajet : " . $e->getMessage();
+        flash_set('error', "Erreur lors de la création du trajet : " . $e->getMessage());
     }
 }
+
+include __DIR__ . "/includes/header.php";
 ?>
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
@@ -134,25 +156,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 <section class="container make-ride">
     <h1>CRÉATION DE TRAJET</h1>
 
-    <?php if ($successMessage): ?>
-        <p class="flash success"><?= htmlspecialchars($successMessage) ?></p>
-    <?php elseif ($errorMessage): ?>
-        <p class="flash error"><?= htmlspecialchars($errorMessage) ?></p>
-    <?php endif; ?>
+    <?= flash_render() ?>
 
     <form class="ride-form" method="post" action="create_ride.php">
+        <?= csrf_field() ?>
+        
         <div class="row">
-            <input type="date" name="date" placeholder="Date" required />
+            <input type="date" name="date" placeholder="Date" required min="<?= date('Y-m-d') ?>" />
         </div>
 
         <div class="row two">
             <div class="location-input-wrapper">
-                <input type="text" id="from" name="from" placeholder="Départ..." required />
+                <input type="text" id="from" name="from" placeholder="Départ..." required maxlength="255" />
                 <ul id="from-suggestions" class="geocoder-suggestions"></ul>
             </div>
             <button type="button" class="swap" aria-label="Intervertir départ et arrivée" title="Intervertir départ et arrivée">⇄</button>
             <div class="location-input-wrapper">
-                <input type="text" id="to" name="to" placeholder="Arrivée..." required />
+                <input type="text" id="to" name="to" placeholder="Arrivée..." required maxlength="255" />
                 <ul id="to-suggestions" class="geocoder-suggestions"></ul>
             </div>
         </div>
@@ -167,7 +187,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
         <div id="map"></div>
 
-        <!-- hidden fields pour lat/lon -->
+        <!-- hidden fields for lat/lon -->
         <input type="hidden" name="depart_latitude" id="depart_latitude" />
         <input type="hidden" name="depart_longitude" id="depart_longitude" />
         <input type="hidden" name="arrivee_latitude" id="arrivee_latitude" />
@@ -175,14 +195,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
 
         <div class="row two">
             <input type="time" name="time_from" placeholder="Heure de départ" required />
-            <input type="time" name="time_to" placeholder="Heure d'arrivée" required />
+            <input type="time" name="time_to" placeholder="Heure d'arrivée (estimée)" />
         </div>
 
         <div class="row passengers">
             <label>Nombre(s) de passager(s)</label>
             <div class="counter">
                 <button type="button" class="minus">-</button>
-                <input type="number" min="1" value="1" name="pax" />
+                <input type="number" min="1" max="8" value="1" name="pax" />
                 <button type="button" class="plus">+</button>
             </div>
         </div>
@@ -195,7 +215,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit'])) {
                     <?php else: ?>
                         <?php foreach ($vehicules as $v): ?>
                             <option
-                                value="<?= $v['vehicule_id'] ?>"
+                                value="<?= (int)$v['vehicule_id'] ?>"
                                 title="<?= htmlspecialchars("{$v['marque']} {$v['modele']} {$v['couleur']} {$v['immatriculation']}") ?>">
                                 <?= htmlspecialchars("{$v['marque']} {$v['modele']} ({$v['immatriculation']})") ?>
                             </option>

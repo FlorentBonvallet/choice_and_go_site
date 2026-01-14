@@ -1,28 +1,25 @@
 ﻿<?php
 session_start();
-$page_title = "Détails du trajet — Choice&Go";
 require_once __DIR__ . "/includes/db.php";
+require_once __DIR__ . "/includes/flash.php";
+
+$page_title = "Détails du trajet — Choice&Go";
 
 // Utilisateur connecté requis
 if (empty($_SESSION['user_id'])) {
-    $baseDir = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\');
-    $location = ($baseDir === '' || $baseDir === '.') ? '/login.php' : $baseDir . '/login.php';
-    header('Location: ' . $location);
+    flash_set('error', 'Vous devez être connecté pour accéder à cette page.');
+    header('Location: login.php');
     exit;
 }
 
 $userId = (int) $_SESSION['user_id'];
-$trajetId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+$trajetId = filter_var($_GET['id'] ?? 0, FILTER_VALIDATE_INT);
 
-if ($trajetId <= 0) {
-    // Redirection simple si id manquant
-    $baseDir = rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\');
-    $location = ($baseDir === '' || $baseDir === '.') ? '/reservations.php' : $baseDir . '/reservations.php';
-    header('Location: ' . $location);
+if (!$trajetId || $trajetId <= 0) {
+    flash_set('error', 'Trajet invalide.');
+    header('Location: reservations.php');
     exit;
 }
-
-include __DIR__ . "/includes/header.php";
 
 // Récupère le trajet et vérifie que l'utilisateur est le conducteur
 $trajetStmt = $pdo->prepare('SELECT trajet_id, conducteur_id, lieu_depart, lieu_arrivee, date_heure_depart FROM trajets WHERE trajet_id = :id LIMIT 1');
@@ -30,16 +27,18 @@ $trajetStmt->execute([':id' => $trajetId]);
 $trajet = $trajetStmt->fetch();
 
 if (!$trajet) {
-    echo '<section class="container"><p class="flash error">Trajet introuvable.</p></section>';
-    include __DIR__ . "/includes/footer.php";
+    flash_set('error', 'Trajet introuvable.');
+    header('Location: reservations.php');
     exit;
 }
 
 if ((int)$trajet['conducteur_id'] !== $userId) {
-    echo '<section class="container"><p class="flash error">Accès refusé — vous n\'êtes pas le conducteur de ce trajet.</p></section>';
-    include __DIR__ . "/includes/footer.php";
+    flash_set('error', 'Accès refusé — vous n\'êtes pas le conducteur de ce trajet.');
+    header('Location: reservations.php');
     exit;
 }
+
+include __DIR__ . "/includes/header.php";
 
 // Récupère les réservations liées au trajet avec infos passagers
 $resStmt = $pdo->prepare('
@@ -69,6 +68,8 @@ foreach ($reservations as $r) {
 ?>
 <section class="container">
   <h1>Détails du trajet</h1>
+
+  <?= flash_render() ?>
 
   <div class="trip-summary">
     <div><strong>Trajet :</strong> <?php echo htmlspecialchars($trajet['lieu_depart']); ?> → <?php echo htmlspecialchars($trajet['lieu_arrivee']); ?></div>
@@ -115,11 +116,11 @@ foreach ($reservations as $r) {
                 </tbody>
             </table>
 
-      <div class="summary" style="margin-top:1rem;">
-        <strong>Total de places réservées :</strong> <?php echo $totalReserved; ?>
-      </div>
-    </div>
+            <div class="summary" style="margin-top:1rem;">
+              <strong>Total de places réservées :</strong> <?php echo $totalReserved; ?>
+            </div>
         </div>
+    </div>
   <?php endif; ?>
 </section>
 
