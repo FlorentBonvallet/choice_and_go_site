@@ -100,6 +100,57 @@ document.addEventListener('click', (e) => {
     }
 
 
+
+    
+
+    // ===============================
+    // POPUP SUPPRESSION VÉHICULE
+    // ===============================
+    if (clicked && clicked.closest && clicked.closest('.btn-delete-vehicle')) {
+        const btn = clicked.closest('.btn-delete-vehicle');
+        const popup = btn.nextElementSibling;
+
+        if (!popup) return;
+
+        const vehicleId = btn.dataset.vehicleId;
+        const vehicleName = btn.dataset.vehicleName;
+        const vehiclePlate = btn.dataset.vehiclePlate;
+
+        const text = popup.querySelector('#vehicle-popup-text');
+        if (text) {
+            text.textContent = `Voulez-vous vraiment supprimer le véhicule ${vehicleName} (${vehiclePlate}) ?`;
+        }
+
+        popup.dataset.vehicleId = vehicleId;
+        popup.style.display = 'block';
+    }
+
+    if (clicked && clicked.closest && clicked.closest('.annuler-vehicle')) {
+        const popup = clicked.closest('.popup-vehicle');
+        if (popup) popup.style.display = 'none';
+    }
+
+    if (clicked && clicked.closest && clicked.closest('.confirmer-vehicle')) {
+        const popup = clicked.closest('.popup-vehicle');
+        if (!popup) return;
+
+        const vehicleId = popup.dataset.vehicleId;
+        popup.style.display = 'none';
+
+        console.log('Suppression véhicule ID :', vehicleId);
+
+        
+    }
+
+    if (e.target.id === 'popup-confirm') {
+        if (!deleteData.type || !deleteData.id) return;
+
+        window.location.href =
+            `delete.php?type=${deleteData.type}&id=${deleteData.id}`;
+    }
+
+
+
 });
 
 // Close modal with Escape

@@ -21,7 +21,7 @@
       <div class="footer-col">
         <h4>CONTACT</h4>
         <ul>
-          <li>06 99 99 XX XX</li>
+          <li>06 99 99 45 45</li>
           <li><a href="mailto:contact@choicego.com">contact@choicego.com</a></li>
         </ul>
       </div>
@@ -46,7 +46,7 @@
       <a href="#">Mentions légales</a>
       <a href="#">Politique de confidentialité</a>
       <a href="#">Cookies</a>
-      <span>© 2025 CHOICE&GO</span>
+      <span>© 2026 CHOICE&GO</span>
     </div>
   </footer>
   <script src="assets/js/app.js"></script>

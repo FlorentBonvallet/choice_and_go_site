@@ -5,12 +5,14 @@ session_start();
 define('PASSWORD_PEPPER', 's3cureP3pp3r!@#');
 
 // Hash a password by adding the pepper before hashing
-function hashPasswordWithPepper($password) {
+function hashPasswordWithPepper($password)
+{
     return password_hash($password . PASSWORD_PEPPER, PASSWORD_DEFAULT);
 }
 
 // Verify a password by adding the pepper before checking
-function verifyPasswordWithPepper($password, $hash) {
+function verifyPasswordWithPepper($password, $hash)
+{
     return password_verify($password . PASSWORD_PEPPER, $hash);
 }
 
@@ -269,12 +271,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <td><?= htmlspecialchars($v['couleur']) ?></td>
                                     <td><?= htmlspecialchars($v['immatriculation']) ?></td>
                                     <td>
-                                        <button type="button" class="btn-delete-vehicle"
-                                            data-vehicle-id="<?= (int) $v['vehicule_id'] ?>"
-                                            data-vehicle-name="<?= htmlspecialchars($v['marque'] . ' ' . $v['modele']) ?>"
-                                            data-vehicle-plate="<?= htmlspecialchars($v['immatriculation']) ?>">
-                                            Supprimer
+                                        <button
+                                            type="button"
+                                            class="btn-delete"
+                                            data-type="vehicle"
+                                            data-id="<?= $v['vehicule_id'] ?>"
+                                            data-message="Voulez-vous vraiment supprimer ce véhicule ?"> Supprimer
                                         </button>
+
+                                        <div class="popup-supr" id="confirm-popup">
+                                            <div class="popup-content-supr">
+                                                <p id="popup-message"></p>
+
+                                                <div class="popup-actions">
+                                                    <button type="button" id="popup-confirm">Oui</button>
+                                                    <button type="button" id="popup-cancel">Annuler</button>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -297,95 +312,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
 </section>
 
-<!-- Delete Vehicle Confirmation Modal -->
-<div id="delete-vehicle-modal" class="confirm-modal" aria-hidden="true">
-  <div class="confirm-modal-backdrop" data-close="true"></div>
-  <div class="confirm-modal-panel" role="dialog" aria-modal="true" aria-labelledby="delete-vehicle-modal-title">
-    <div class="confirm-modal-header">
-      <div class="confirm-modal-icon">⚠️</div>
-      <h3 id="delete-vehicle-modal-title">Confirmer la suppression</h3>
-    </div>
-    <div class="confirm-modal-body">
-      <p id="delete-vehicle-modal-message"></p>
-      <p class="confirm-modal-warning" id="delete-vehicle-modal-warning" style="display: none;"></p>
-    </div>
-    <div class="confirm-modal-actions">
-      <button type="button" class="btn-outline" id="delete-vehicle-modal-cancel">Annuler</button>
-      <button type="button" class="btn-delete-confirm" id="delete-vehicle-modal-confirm">Supprimer</button>
-    </div>
-  </div>
-</div>
+
 
 <!-- Hidden form for vehicle deletion -->
 <form method="post" id="delete-vehicle-form" style="display: none;">
-  <input type="hidden" name="delete_vehicle" value="1">
-  <input type="hidden" name="vehicule_id" id="delete-vehicle-id" value="">
+    <input type="hidden" name="delete_vehicle" value="1" />
+    <input type="hidden" name="vehicule_id" id="delete-vehicle-id" value="" />
 </form>
 
-<script>
-(function(){
-  const deleteVehicleModal = document.getElementById('delete-vehicle-modal');
-  const deleteVehicleForm = document.getElementById('delete-vehicle-form');
-  const deleteVehicleMessage = document.getElementById('delete-vehicle-modal-message');
-  const deleteVehicleWarning = document.getElementById('delete-vehicle-modal-warning');
-  const deleteVehicleConfirm = document.getElementById('delete-vehicle-modal-confirm');
-  const deleteVehicleCancel = document.getElementById('delete-vehicle-modal-cancel');
-  const deleteVehicleIdInput = document.getElementById('delete-vehicle-id');
 
-  function openDeleteVehicleModal(message, warning) {
-    deleteVehicleMessage.textContent = message;
-    if (warning) {
-      deleteVehicleWarning.textContent = warning;
-      deleteVehicleWarning.style.display = 'block';
-    } else {
-      deleteVehicleWarning.style.display = 'none';
-    }
-    deleteVehicleModal.setAttribute('aria-hidden', 'false');
-    deleteVehicleConfirm.focus();
-  }
-
-  function closeDeleteVehicleModal() {
-    deleteVehicleModal.setAttribute('aria-hidden', 'true');
-  }
-
-  // Handle delete vehicle button clicks
-  document.addEventListener('click', function(e) {
-    const deleteBtn = e.target.closest('.btn-delete-vehicle');
-    if (deleteBtn) {
-      const vehicleId = deleteBtn.dataset.vehicleId;
-      const vehicleName = deleteBtn.dataset.vehicleName;
-      const vehiclePlate = deleteBtn.dataset.vehiclePlate;
-
-      deleteVehicleIdInput.value = vehicleId;
-
-      openDeleteVehicleModal(
-        'Voulez-vous vraiment supprimer le véhicule "' + vehicleName + '" (' + vehiclePlate + ') ?',
-        'Le véhicule ne pourra pas être supprimé s\'il est utilisé dans des trajets futurs.'
-      );
-    }
-  });
-
-  // Handle confirm button
-  deleteVehicleConfirm.addEventListener('click', function() {
-    deleteVehicleForm.submit();
-  });
-
-  // Handle cancel button
-  deleteVehicleCancel.addEventListener('click', closeDeleteVehicleModal);
-
-  // Handle backdrop click
-  const backdrop = document.querySelector('#delete-vehicle-modal .confirm-modal-backdrop');
-  if (backdrop) {
-    backdrop.addEventListener('click', closeDeleteVehicleModal);
-  }
-
-  // Handle Escape key
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape' && deleteVehicleModal.getAttribute('aria-hidden') === 'false') {
-      closeDeleteVehicleModal();
-    }
-  });
-})();
-</script>
 
 <?php include __DIR__ . "/includes/footer.php"; ?>

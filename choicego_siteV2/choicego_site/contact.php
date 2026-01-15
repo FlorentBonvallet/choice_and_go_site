@@ -107,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <div class="info-card">
         <div class="info-icon">📱</div>
         <h3>Téléphone</h3>
-        <p>06 99 99 XX XX</p>
+        <p>06 99 99 45 45</p>
         <span class="info-detail">Lun-Ven : 9h-18h</span>
       </div>
 

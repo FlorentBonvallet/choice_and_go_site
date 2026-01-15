@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['make_reservation'])) 
     if (!csrf_validate($_POST['csrf_token'] ?? null)) {
         flash_set('error', 'Session expirée. Veuillez réessayer.');
     } elseif (!isset($_SESSION['user_id'])) {
-        flash_set('error', 'Vous devez être connecté pour faire une réservation. <a href="login.php">Se connecter</a>');
+        flash_set('error', 'Vous devez être connecté pour faire une réservation.');
     } else {
         $trajet_id = (int)($_POST['trajet_id'] ?? 0);
         $nombre_places = (int)($_POST['nombre_places'] ?? 1);
@@ -82,7 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['make_reservation'])) 
                     $pdo->commit();
                     
                     csrf_regenerate();
-                    flash_set('success', 'Réservation confirmée pour ' . $placesToReserve . ' place(s) ! <a href="reservations.php">Voir vos réservations</a>');
+                    flash_set('success', 'Réservation confirmée pour ' . $placesToReserve . ' place(s) !');
                     
                     // Refresh results
                     $stmt->execute([
